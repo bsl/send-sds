@@ -1,0 +1,2 @@
+send-sds is a utility for sending SDS (MIDI Sample Dump Standard) files to
+samplers from Linux using the ALSA MIDI API.
