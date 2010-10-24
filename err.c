@@ -4,28 +4,39 @@
 
 #include "err.h"
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 struct err {
     char *buf;
     size_t buf_size;
 };
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 err_t
 err_create(size_t size)
 {
     err_t err;
 
-    if (size == 0) {
-        return NULL;
-    }
-
-    err = malloc(sizeof(*err));
-
+    err           = malloc(sizeof(*err));
     err->buf      = malloc(size);
     err->buf_size = size;
 
     err->buf[0] = '\0';
 
     return err;
+}
+
+void
+err_destroy(err_t err)
+{
+    if (err != NULL) {
+        if (err->buf != NULL) {
+            free(err->buf);
+        }
+
+        free(err);
+    }
 }
 
 void
@@ -37,7 +48,7 @@ err_set(
     const char *format,
     ...
 ) {
-    char buf1[256];
+    char buf1[256]; /* XXX should not be fixed size */
     va_list ap;
 
     va_start(ap, format);

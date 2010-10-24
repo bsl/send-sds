@@ -2,16 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/stat.h>
-
-#include <alsa/asoundlib.h>
+#include <errno.h>
 
 #include "err.h"
+#include "midi.h"
+#include "sds.h"
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-#define DUMP_HEADER_LENGTH 21
-#define DATA_PACKET_LENGTH 127
+#define VERSION "2010.10.23"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -33,92 +30,91 @@ typedef enum {
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+static void
+display_usage(void);
+
 static int
-open_midi_interface(
-    const char *device,
-    snd_rawmidi_t **handle_in,
-    snd_rawmidi_t **handle_out,
+convert_channel_num(
+    char *s,
+    unsigned int *channel_num,
     err_t err
 );
 
 static int
-open_sds_file(
-    const char *filename,
-    int *fd_r,
+convert_sample_num(
+    char *s,
+    unsigned int *channel_num,
     err_t err
 );
 
 static int
-sds_file_size_is_ok(
+convert_string_to_unsigned_int(
+    char *s,
+    unsigned int *ui
+);
+
+static int
+send_file(
     int fd,
-    err_t err
-);
-
-static int send_sds_file(
-    snd_rawmidi_t *handle_in,
-    snd_rawmidi_t *handle_out,
-    int fd,
-    err_t err
-);
-
-static int
-send_sds_header(
-    snd_rawmidi_t *handle_in,
-    snd_rawmidi_t *handle_out,
-    int fd,
-    err_t err
-);
-
-static int
-send_sds_data_packet(
-    snd_rawmidi_t *handle_in,
-    snd_rawmidi_t *handle_out,
-    int fd,
-    err_t err
-);
-
-static int
-send_data(
-    snd_rawmidi_t *handle_in,
-    snd_rawmidi_t *handle_out,
-    const char *data,
-    size_t data_length,
+    size_t file_size,
+    midi_t midi,
+    unsigned int channel_num,
+    unsigned int sample_num,
     err_t err
 );
 
 static int
 get_response(
-    snd_rawmidi_t *handle_in,
+    midi_t midi,
+    unsigned int channel_num,
+    unsigned int modded_packet_num,
     response_t *response,
     err_t err
 );
+
+static const char *
+response_to_string(response_t response);
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int main(int argc, char **argv)
 {
-    const char *device = "hw:37,0,0";
-    const char *filename = "ok.sds";
-
-    err_t err;
     int ret;
+    char *device, *channel_string, *sample_string, *filename;
+    unsigned int channel_num, sample_num;
     int fd;
-    snd_rawmidi_t *handle_in, *handle_out;
+    size_t file_size;
+    err_t err;
+    midi_t midi;
 
-    (void)argc;
-    (void)argv;
+    ret            = 1;
+    device         = NULL;
+    filename       = NULL;
+    channel_string = NULL;
+    sample_string  = NULL;
+    channel_num    = 0;
+    fd             = 0;
+    err            = err_create(256);
+    midi           = NULL;
 
-    err = err_create(256);
-    ret = 1;
-    fd = 0;
-    handle_in  = NULL;
-    handle_out = NULL;
+    if (argc != 1+4) {
+        display_usage();
+        goto end;
+    }
+
+    device         = argv[1];
+    channel_string = argv[2];
+    sample_string  = argv[3];
+    filename       = argv[4];
 
     if (
-        !open_midi_interface(device, &handle_in, &handle_out, err) ||
-        !open_sds_file(filename, &fd, err)                         ||
-        !sds_file_size_is_ok(fd, err)                              ||
-        !send_sds_file(handle_in, handle_out, fd, err)
+        !convert_channel_num(channel_string, &channel_num, err) ||
+        !convert_sample_num(sample_string, &sample_num, err)    ||
+        !midi_open_interface(device, &midi, err)                ||
+        !sds_open_file(filename, &fd, err)                      ||
+        !sds_get_file_size(fd, &file_size, err)                 ||
+        !sds_file_size_is_ok(file_size, err)                    ||
+        !send_file(fd, file_size, midi, channel_num, sample_num, err)
     ) {
         fprintf(stderr, "%s\n", err_get(err));
         goto end;
@@ -127,182 +123,191 @@ int main(int argc, char **argv)
     ret = 0;
 
 end:
+    err_destroy(err);
+
     if (fd) {
         close(fd);
     }
 
-    if (handle_in) {
-        snd_rawmidi_close(handle_in);
-    }
-
-    if (handle_out) {
-        snd_rawmidi_close(handle_out);
-    }
+    midi_close_interface(midi);
 
     return ret;
 }
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+static void
+display_usage(void)
+{
+    fprintf(
+        stderr,
+        "send-sds " VERSION "\n"
+        "usage: <alsa-device> <channel-num> <sample-num> <sds-filename>\n"
+    );
+}
+
 static int
-open_midi_interface(
-    const char *device,
-    snd_rawmidi_t **handle_in,
-    snd_rawmidi_t **handle_out,
+convert_channel_num(
+    char *s,
+    unsigned int *channel_num,
     err_t err
 ) {
-    int r;
+    unsigned int ui;
 
-    r = snd_rawmidi_open(handle_in, handle_out, device, 0);
-    if (r) {
-        err_set2(err, "snd_rawmidi_open \"%s\": error %d", device, r);
+    if (!convert_string_to_unsigned_int(s, &ui)) {
+        err_set2(err, "invalid channel number \"%s\"", s);
         return 0;
     }
 
+    if (ui > 15) {
+        err_set2(err, "invalid channel number \"%s\", should be 0..15", s);
+    }
+
+    *channel_num = ui;
     return 1;
 }
 
 static int
-open_sds_file(
-    const char *filename,
-    int *fd_r,
+convert_sample_num(
+    char *s,
+    unsigned int *sample_num,
     err_t err
 ) {
-    int fd;
+    unsigned int ui;
 
-    fd = open(filename, O_RDONLY);
-    if (fd == -1) {
-        err_set2(err, "open \"%s\": %s", filename, strerror(errno));
+    if (!convert_string_to_unsigned_int(s, &ui)) {
+        err_set2(err, "invalid sample number \"%s\"", s);
         return 0;
     }
 
-    *fd_r = fd;
+    if (ui > 16383) {
+        err_set2(err, "invalid sample number \"%s\", should be 0..16383", s);
+    }
 
+    *sample_num = ui;
     return 1;
 }
 
 static int
-sds_file_size_is_ok(
-    int fd,
-    err_t err
+convert_string_to_unsigned_int(
+    char *s,
+    unsigned int *ui
 ) {
-    struct stat buf;
+    char *endptr;
+    unsigned int c;
 
-    if (fstat(fd, &buf) == -1) {
-        err_set2(err, "stat: %s", strerror(errno));
+    errno = 0;
+    c = strtoul(s, &endptr, 0);
+
+    if (
+        errno   != 0    ||
+        *s      == '\0' ||
+        *endptr != '\0'
+    ) {
         return 0;
     }
 
-    if ((buf.st_size - DUMP_HEADER_LENGTH) % DATA_PACKET_LENGTH != 0) {
-        err_set2(err, "bad file size (%d)", buf.st_size);
-        return 0;
-    }
-
+    *ui = c;
     return 1;
 }
 
+#define max(a,b) ((a) > (b) ? (a) : (b))
+
 static int
-send_sds_file(
-    snd_rawmidi_t *handle_in,
-    snd_rawmidi_t *handle_out,
+send_file(
     int fd,
+    size_t file_size,
+    midi_t midi,
+    unsigned int channel_num,
+    unsigned int sample_num,
     err_t err
 ) {
-    return
-        send_sds_header(handle_in, handle_out, fd, err) &&
-        send_sds_data_packet(handle_in, handle_out, fd, err);
-}
-
-static int
-send_sds_header(
-    snd_rawmidi_t *handle_in,
-    snd_rawmidi_t *handle_out,
-    int fd,
-    err_t err
-) {
-    char buf[DUMP_HEADER_LENGTH];
-    int r;
-
-    r = read(fd, buf, DUMP_HEADER_LENGTH);
-    if (r != DUMP_HEADER_LENGTH) {
-        err_set2(err, "read: tried to read %d bytes, read %d", DUMP_HEADER_LENGTH, r);
-        return 0;
-    }
-
-    return send_data(handle_in, handle_out, buf, DUMP_HEADER_LENGTH, err);
-}
-
-static int
-send_sds_data_packet(
-    snd_rawmidi_t *handle_in,
-    snd_rawmidi_t *handle_out,
-    int fd,
-    err_t err
-) {
-    char buf[DATA_PACKET_LENGTH];
-    int r;
-
-    while (1) {
-        r = read(fd, buf, DATA_PACKET_LENGTH);
-
-        if (r == 0) {
-            return 1;
-        }
-
-        if (r != DATA_PACKET_LENGTH) {
-            err_set2(err, "read: tried to read %d bytes, read %d", DUMP_HEADER_LENGTH, r);
-            return 0;
-        }
-
-        if (!send_data(handle_in, handle_out, buf, DATA_PACKET_LENGTH, err)) {
-            return 0;
-        }
-    }
-}
-
-static int
-send_data(
-    snd_rawmidi_t *handle_in,
-    snd_rawmidi_t *handle_out,
-    const char *data,
-    size_t data_length,
-    err_t err
-) {
-    ssize_t r;
+    unsigned char buf[max(SDS_HEADER_LENGTH, SDS_PACKET_LENGTH)];
     response_t response;
+    unsigned int num_packets, packet_num, modded_packet_num;
 
-    r = snd_rawmidi_write(handle_out, data, data_length);
-    if ((size_t)r != data_length) {
-        err_set2(err, "snd_rawmidi_write: tried to write %d bytes, wrote %d", data_length, r);
+    if (!sds_read_header(fd, buf, sizeof(buf), err)) {
         return 0;
     }
 
-    r = get_response(handle_in, &response, err);
-    if (r && response == RESPONSE_ACK) {
-        return 1;
+    /* patch in channel number */
+    buf[2] = (unsigned char)channel_num;
+
+    /* patch in sample number */
+    buf[4] =  sample_num       & 0x7f;
+    buf[5] = (sample_num >> 7) & 0x7f;
+
+    if (!midi_send(midi, buf, SDS_HEADER_LENGTH, err)) {
+        return 0;
     }
 
-    return 0;
+    if (!get_response(midi, channel_num, 0, &response, err)) {
+        return 0;
+    }
+
+    if (response != RESPONSE_ACK) {
+        err_set2(
+            err,
+            "received %s instead of %s in response to dump header",
+            response_to_string(response),
+            response_to_string(RESPONSE_ACK)
+        );
+        return 0;
+    }
+
+    num_packets = sds_calc_num_packets(file_size);
+    for (packet_num=0; packet_num < num_packets; ) {
+        modded_packet_num = packet_num % 0x80;
+
+        if (!sds_read_packet(fd, buf, sizeof(buf), err)) {
+            return 0;
+        }
+
+        /* XXX patch channel number */
+        /* XXX patch packet number */
+
+        if (!midi_send(midi, buf, SDS_PACKET_LENGTH, err)) {
+            return 0;
+        }
+
+        if (!get_response(midi, channel_num, modded_packet_num, &response, err)) {
+            return 0;
+        }
+
+        if (response != RESPONSE_ACK) {
+            err_set2(
+                err,
+                "received %s instead of %s in response to packet %d",
+                response_to_string(response),
+                response_to_string(RESPONSE_ACK),
+                packet_num
+            );
+            return 0;
+        }
+
+        packet_num++;
+    }
+
+    return 1;
 }
 
 static int
 get_response(
-    snd_rawmidi_t *handle_in,
+    midi_t midi,
+    unsigned int channel_num,
+    unsigned int modded_packet_num,
     response_t *response,
     err_t err
 ) {
     int done;
     unsigned char c, x;
     response_state_t state;
-    ssize_t r;
 
     done = 0;
     state = STATE0;
 
     while (!done) {
-        r = snd_rawmidi_read(handle_in, &c, 1);
-        if (r != 1) {
-            err_set2(err, "snd_rawmidi_read: failed to read 1 byte");
+        if (!midi_read(midi, &c, err)) {
             return 0;
         }
 
@@ -320,7 +325,7 @@ get_response(
                 break;
 
             case STATE2:
-                state = (c < 16)
+                state = (c == channel_num)
                     ? STATE3
                     : STATE0;
                 break;
@@ -333,7 +338,7 @@ get_response(
                 break;
 
             case STATE4:
-                state = (c < 0x80)
+                state = (c == modded_packet_num)
                     ? STATE5
                     : STATE0;
                 break;
@@ -358,4 +363,17 @@ get_response(
     }
 
     return 0;
+}
+
+static const char *
+response_to_string(response_t response)
+{
+    switch (response) {
+        case RESPONSE_ACK:    return "ACK";
+        case RESPONSE_NAK:    return "NAK";
+        case RESPONSE_CANCEL: return "CANCEL";
+        case RESPONSE_WAIT:   return "WAIT";
+    }
+
+    return "UNKNOWN";
 }
