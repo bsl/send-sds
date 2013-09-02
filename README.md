@@ -1,7 +1,9 @@
+Forked from [bsl/send-sds][1].
+
 send-sds is a utility for sending SDS (MIDI Sample Dump Standard) files to
 samplers from Linux using the ALSA MIDI API.
 
-To convert an audio file to SDS, I use [libsndfile][1]'s sndfile-convert
+To convert an audio file to SDS, I use [libsndfile][2]'s sndfile-convert
 utility. _WARNING_: use libsndfile 1.0.23 or later -- previous versions had
 bugs that caused the creation of invalid SDS files.
 
@@ -17,6 +19,5 @@ bugs that caused the creation of invalid SDS files.
 
     $ send-sds hw:1,0,0 0 2 foo.sds
 
-    $
-
-[1]: http://www.mega-nerd.com/libsndfile/
+[1]: http://github.com/bsl/send-sds/
+[2]: http://www.mega-nerd.com/libsndfile/

@@ -17,12 +17,7 @@ struct midi {
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-int
-midi_open_interface(
-    const char *device,
-    midi_t *midi_r,
-    err_t err
-) {
+int midi_open_interface(const char *device, midi_t *midi_r, err_t err) {
     int r;
     snd_rawmidi_t *handle_in, *handle_out;
     midi_t midi;
@@ -43,10 +38,7 @@ midi_open_interface(
     return 1;
 }
 
-void
-midi_close_interface(
-    midi_t midi
-) {
+void midi_close_interface(midi_t midi) {
     if (midi == NULL) {
         return;
     }
@@ -57,30 +49,21 @@ midi_close_interface(
     free(midi);
 }
 
-int
-midi_send(
-    midi_t midi,
-    const unsigned char *data,
-    size_t data_length,
-    err_t err
-) {
+int midi_send(midi_t midi, const unsigned char *data,
+              size_t data_length, err_t err) {
     ssize_t r;
 
     r = snd_rawmidi_write(midi->handle_out, data, data_length);
     if ((size_t)r != data_length) {
-        err_set2(err, "snd_rawmidi_write: tried to write %d bytes, wrote %d", data_length, r);
+        err_set2(err, "snd_rawmidi_write: tried to write %d bytes, wrote %d",
+                 data_length, r);
         return 0;
     }
 
     return 1;
 }
 
-int
-midi_read(
-    midi_t midi,
-    unsigned char *byte,
-    err_t err
-) {
+int midi_read(midi_t midi, unsigned char *byte, err_t err) {
     ssize_t r;
 
     r = snd_rawmidi_read(midi->handle_in, byte, 1);

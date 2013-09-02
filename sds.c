@@ -9,42 +9,25 @@
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int
-sds_read(
-    int fd,
-    size_t length,
-    unsigned char *buf,
-    size_t buf_size,
-    err_t err
-);
+static int sds_read(int fd, size_t length, unsigned char *buf,
+                    size_t buf_size, err_t err);
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-int
-sds_open_file(
-    const char *filename,
-    int *fd_r,
-    err_t err
-) {
+int sds_open_file(const char *filename, int *fd_r, err_t err) {
     int fd;
-
     fd = open(filename, O_RDONLY);
+
     if (fd == -1) {
         err_set2(err, "open \"%s\": %s", filename, strerror(errno));
         return 0;
     }
 
     *fd_r = fd;
-
     return 1;
 }
 
-int
-sds_get_file_size(
-    int fd,
-    size_t *size,
-    err_t err
-) {
+int sds_get_file_size(int fd, size_t *size, err_t err) {
     struct stat buf;
 
     if (fstat(fd, &buf) == -1) {
@@ -53,19 +36,12 @@ sds_get_file_size(
     }
 
     *size = buf.st_size;
-
     return 1;
 }
 
-int
-sds_file_size_is_ok(
-    size_t size,
-    err_t err
-) {
-    if (
-        (size < SDS_HEADER_LENGTH) ||
-        ((size - SDS_HEADER_LENGTH) % SDS_PACKET_LENGTH != 0)
-    ) {
+int sds_file_size_is_ok(size_t size, err_t err) {
+    if ((size < SDS_HEADER_LENGTH)
+        || ((size - SDS_HEADER_LENGTH) % SDS_PACKET_LENGTH != 0)) {
         err_set2(err, "bad file size (%d)", size);
         return 0;
     }
@@ -74,47 +50,27 @@ sds_file_size_is_ok(
 }
 
 /* assumes sds_file_size_is_ok(size, ...) */
-unsigned int
-sds_calc_num_packets(
-    size_t size
-) {
+unsigned int sds_calc_num_packets(size_t size) {
     return (size - SDS_HEADER_LENGTH) / SDS_PACKET_LENGTH;
 }
 
-int
-sds_read_header(
-    int fd,
-    unsigned char *buf,
-    size_t buf_size,
-    err_t err
-) {
+int sds_read_header(int fd, unsigned char *buf, size_t buf_size, err_t err) {
     return sds_read(fd, SDS_HEADER_LENGTH, buf, buf_size, err);
 }
 
-int
-sds_read_packet(
-    int fd,
-    unsigned char *buf,
-    size_t buf_size,
-    err_t err
-) {
+int sds_read_packet(int fd, unsigned char *buf, size_t buf_size, err_t err) {
     return sds_read(fd, SDS_PACKET_LENGTH, buf, buf_size, err);
 }
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int
-sds_read(
-    int fd,
-    size_t length,
-    unsigned char *buf,
-    size_t buf_size,
-    err_t err
-) {
+static int sds_read(int fd, size_t length, unsigned char *buf,
+                    size_t buf_size, err_t err) {
     ssize_t r;
 
     if (length > buf_size) {
-        err_set2(err, "supposed to read %d bytes, buffer size only %d", length, buf_size);
+        err_set2(err, "supposed to read %d bytes, buffer size only %d",
+                 length, buf_size);
         return 0;
     }
 
@@ -123,7 +79,8 @@ sds_read(
         if (r == -1) {
             err_set2(err, "read: %s", strerror(errno));
         } else {
-            err_set2(err, "read: tried to read %d bytes, actually read %d", length, r);
+            err_set2(err, "read: tried to read %d bytes, actually read %d",
+                     length, r);
         }
 
         return 0;

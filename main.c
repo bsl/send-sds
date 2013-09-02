@@ -30,55 +30,27 @@ typedef enum {
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static void
-display_usage(void);
+static void display_usage(void);
 
-static int
-convert_channel_num(
-    char *s,
-    unsigned int *channel_num,
-    err_t err
-);
+static int convert_channel_num(char *s, unsigned int *channel_num, err_t err);
 
-static int
-convert_sample_num(
-    char *s,
-    unsigned int *channel_num,
-    err_t err
-);
+static int convert_sample_num(char *s, unsigned int *channel_num, err_t err);
 
-static int
-convert_string_to_unsigned_int(
-    char *s,
-    unsigned int *ui
-);
+static int convert_string_to_unsigned_int(char *s, unsigned int *ui);
 
-static int
-send_file(
-    int fd,
-    size_t file_size,
-    midi_t midi,
-    unsigned int channel_num,
-    unsigned int sample_num,
-    err_t err
-);
+static int send_file(int fd, size_t file_size, midi_t midi,
+                     unsigned int channel_num, unsigned int sample_num,
+                     err_t err);
 
-static int
-get_response(
-    midi_t midi,
-    unsigned int channel_num,
-    unsigned int modded_packet_num,
-    response_t *response,
-    err_t err
-);
+static int get_response(midi_t midi, unsigned int channel_num,
+                        unsigned int modded_packet_num, response_t *response,
+                        err_t err);
 
-static const char *
-response_to_string(response_t response);
+static const char * response_to_string(response_t response);
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     int ret;
     char *device, *channel_string, *sample_string, *filename;
     unsigned int channel_num, sample_num;
@@ -87,35 +59,33 @@ int main(int argc, char **argv)
     err_t err;
     midi_t midi;
 
-    ret            = 1;
-    device         = NULL;
-    filename       = NULL;
+    ret = 1;
+    device = NULL;
+    filename = NULL;
     channel_string = NULL;
-    sample_string  = NULL;
-    channel_num    = 0;
-    fd             = 0;
-    err            = err_create(256);
-    midi           = NULL;
+    sample_string = NULL;
+    channel_num = 0;
+    fd = 0;
+    err = err_create(256);
+    midi = NULL;
 
     if (argc != 1+4) {
         display_usage();
         goto end;
     }
 
-    device         = argv[1];
+    device = argv[1];
     channel_string = argv[2];
-    sample_string  = argv[3];
-    filename       = argv[4];
+    sample_string = argv[3];
+    filename = argv[4];
 
-    if (
-        !convert_channel_num(channel_string, &channel_num, err) ||
-        !convert_sample_num(sample_string, &sample_num, err)    ||
-        !midi_open_interface(device, &midi, err)                ||
-        !sds_open_file(filename, &fd, err)                      ||
-        !sds_get_file_size(fd, &file_size, err)                 ||
-        !sds_file_size_is_ok(file_size, err)                    ||
-        !send_file(fd, file_size, midi, channel_num, sample_num, err)
-    ) {
+    if (!convert_channel_num(channel_string, &channel_num, err)
+        || !convert_sample_num(sample_string, &sample_num, err)
+        || !midi_open_interface(device, &midi, err)
+        || !sds_open_file(filename, &fd, err)
+        || !sds_get_file_size(fd, &file_size, err)
+        || !sds_file_size_is_ok(file_size, err)
+        || !send_file(fd, file_size, midi, channel_num, sample_num, err)) {
         fprintf(stderr, "%s\n", err_get(err));
         goto end;
     }
