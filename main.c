@@ -150,11 +150,7 @@ static int convert_string_to_unsigned_int(char *s, unsigned int *ui) {
     errno = 0;
     c = strtoul(s, &endptr, 0);
 
-    if (
-        errno   != 0    ||
-        *s      == '\0' ||
-        *endptr != '\0'
-    ) {
+    if (errno != 0 || *s == '\0' || *endptr != '\0') {
         return 0;
     }
 
@@ -164,6 +160,9 @@ static int convert_string_to_unsigned_int(char *s, unsigned int *ui) {
 
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
+/*
+ * TODO: Improve error handling by refactoring err_t
+ */
 static int send_file(int fd, size_t file_size, midi_t midi,
                      unsigned int channel_num, unsigned int sample_num,
                      err_t err) {
@@ -191,12 +190,8 @@ static int send_file(int fd, size_t file_size, midi_t midi,
     }
 
     if (response != RESPONSE_ACK) {
-        err_set2(
-            err,
-            "received %s instead of %s in response to dump header",
-            response_to_string(response),
-            response_to_string(RESPONSE_ACK)
-        );
+        err_set2(err, "received %s instead of %s in response to dump header",
+                 response_to_string(response), response_to_string(RESPONSE_ACK));
         return 0;
     }
 
@@ -221,10 +216,8 @@ static int send_file(int fd, size_t file_size, midi_t midi,
         }
 
         if (response != RESPONSE_ACK) {
-            err_set2(err,
-                     "received %s instead of %s in response to packet %d",
-                     response_to_string(response),
-                     response_to_string(RESPONSE_ACK),
+            err_set2(err, "received %s instead of %s in response to packet %d",
+                     response_to_string(response), response_to_string(RESPONSE_ACK),
                      packet_num);
             return 0;
         }
