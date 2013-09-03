@@ -8,7 +8,7 @@
 #include "midi.h"
 #include "sds.h"
 
-#define VERSION "2010.10.23"
+#define VERSION "0.0.1"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -48,6 +48,8 @@ static int get_response(midi_t midi, unsigned int channel_num,
 
 static const char * response_to_string(response_t response);
 
+static int end(err_t*, int, midi_t*, int);
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int main(int argc, char **argv) {
@@ -71,7 +73,6 @@ int main(int argc, char **argv) {
 
     if (argc != 1+4) {
         display_usage();
-        goto end;
     }
 
     device = argv[1];
@@ -79,27 +80,39 @@ int main(int argc, char **argv) {
     sample_string = argv[3];
     filename = argv[4];
 
-    if (!convert_channel_num(channel_string, &channel_num, err)
-        || !convert_sample_num(sample_string, &sample_num, err)
-        || !midi_open_interface(device, &midi, err)
-        || !sds_open_file(filename, &fd, err)
-        || !sds_get_file_size(fd, &file_size, err)
-        || !sds_file_size_is_ok(file_size, err)
-        || !send_file(fd, file_size, midi, channel_num, sample_num, err)) {
-        fprintf(stderr, "%s\n", err_get(err));
-        goto end;
+    if (!convert_channel_num(channel_string, &channel_num, err)) {
     }
 
-    ret = 0;
+    if (!convert_sample_num(sample_string, &sample_num, err)) {
+    }
 
-end:
-    err_destroy(err);
+    if (!midi_open_interface(device, &midi, err)) {
+    }
+
+    if (!sds_open_file(filename, &fd, err)) {
+    }
+
+    if (!sds_get_file_size(fd, &file_size, err)) {
+    }
+
+    if (!sds_file_size_is_ok(file_size, err)) {
+    }
+
+    if (!send_file(fd, file_size, midi, channel_num, sample_num, err)) {
+        fprintf(stderr, "%s\n", err_get(err));
+    }
+
+    return end(&err, fd, &midi, ret);
+}
+
+static int end(err_t* err, int fd, midi_t* midi, int ret) {
+    err_destroy(*err);
 
     if (fd) {
         close(fd);
     }
 
-    midi_close_interface(midi);
+    midi_close_interface(*midi);
 
     return ret;
 }
@@ -109,6 +122,7 @@ end:
 static void display_usage(void) {
     fprintf(stderr, "send-sds " VERSION "\n"
             "usage: <alsa-device> <channel-num> <sample-num> <sds-filename>\n");
+    exit(1);
 }
 
 static int convert_channel_num(char *s, unsigned int *channel_num, err_t err) {
