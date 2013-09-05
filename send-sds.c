@@ -4,11 +4,10 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "meta.h"
 #include "err.h"
 #include "midi.h"
 #include "sds.h"
-
-#define VERSION "0.0.1"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -133,7 +132,8 @@ static int end(err_t* err, int fd, midi_t* midi, int ret) {
 
 static void display_usage(void) {
     fprintf(stderr, "send-sds " VERSION "\n"
-            "usage: send-sds <alsa-device> <channel-num> <sample-num> <sds-filename>\n");
+            "usage: send-sds <alsa-device> <channel-num> <sample-num> "
+            "<sds-filename>\n");
     exit(1);
 }
 
@@ -219,7 +219,8 @@ static int send_file(int fd, size_t file_size, midi_t midi,
 
     if (response != RESPONSE_ACK) {
         err_set2(err, "received %s instead of %s in response to dump header",
-                 response_to_string(response), response_to_string(RESPONSE_ACK));
+                 response_to_string(response),
+                 response_to_string(RESPONSE_ACK));
         return 0;
     }
 
@@ -245,7 +246,8 @@ static int send_file(int fd, size_t file_size, midi_t midi,
 
         if (response != RESPONSE_ACK) {
             err_set2(err, "received %s instead of %s in response to packet %d",
-                     response_to_string(response), response_to_string(RESPONSE_ACK),
+                     response_to_string(response),
+                     response_to_string(RESPONSE_ACK),
                      packet_num);
             return 0;
         }

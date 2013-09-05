@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <alsa/asoundlib.h>
 
+#include "meta.h"
+#include "err.h"
+#include "midi.h"
 #include "sds.h"
 
 #define BUF_SIZE    256
