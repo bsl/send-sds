@@ -5,9 +5,9 @@
 
 #include "err.h"
 
-#define SDS_HEADER_LENGTH            21
-#define SDS_PACKET_LENGTH            127
-#define SDS_AUDIO_BYTES_PER_BLOCK    120
+#define SDS_HEADER_LENGTH              0x15
+#define SDS_PACKET_LENGTH              0x7F
+#define SDS_AUDIO_BYTES_PER_PACKET     0x78
 
 int sds_open_file(const char *filename, int *fd, err_t err);
 

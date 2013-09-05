@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <alsa/asoundlib.h>
 
+#include "sds.h"
+
 #define BUF_SIZE    256
 
 void usage_and_exit(void);

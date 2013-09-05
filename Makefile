@@ -9,14 +9,15 @@ rm = rm -f
 
 all: send-sds receive-sds
 
-send-sds: $(sources) $(headers)
-	$(compiler) $(compiler_flags) -o $@ $(sources) $(libraries)
+send-sds: send-sds.c err.c midi.c sds.c $(headers)
+	$(compiler) $(compiler_flags) -o $@ $^ $(libraries)
 
-receive-sds: receive-sds.c
-	$(compiler) $(compiler_flags) -o $@ $(sources) $(libraries)
+receive-sds: receive-sds.c err.c midi.c sds.c $(headers)
+	$(compiler) $(compiler_flags) -o $@ $^ $(libraries)
 
 .PHONY: clean
 
 clean:
 	-$(rm) send-sds
 	-$(rm) receive-sds
+	-$(rm) *~

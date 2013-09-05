@@ -9,7 +9,8 @@
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int sds_read(int fd, size_t length, unsigned char *buf, size_t buf_size, err_t err);
+static int sds_read(int fd, size_t length, unsigned char *buf, \
+                    size_t buf_size, err_t err);
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
