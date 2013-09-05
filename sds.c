@@ -9,8 +9,7 @@
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int sds_read(int fd, size_t length, unsigned char *buf,
-                    size_t buf_size, err_t err);
+static int sds_read(int fd, size_t length, unsigned char *buf, size_t buf_size, err_t err);
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -58,9 +57,25 @@ int sds_read_header(int fd, unsigned char *buf, size_t buf_size, err_t err) {
     return sds_read(fd, SDS_HEADER_LENGTH, buf, buf_size, err);
 }
 
+/* assumes sds_read_header has already read data into buf */
+int sds_display_header(unsigned char* buf) {
+    int i;
+
+    printf("SDS HEADER: ");
+    for (i = 0; i < SDS_HEADER_LENGTH; i++) {
+        printf("%X ", buf[i]);
+    }
+    printf("\n");
+    return 1;
+}
+
 int sds_read_packet(int fd, unsigned char *buf, size_t buf_size, err_t err) {
     return sds_read(fd, SDS_PACKET_LENGTH, buf, buf_size, err);
 }
+
+/* int sds_write_file(char* filename, unsigned char *buf, size_t buf_size) { */
+/*     int header_done; */
+/* } */
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -75,6 +90,7 @@ static int sds_read(int fd, size_t length, unsigned char *buf,
     }
 
     r = read(fd, buf, length);
+
     if ((size_t)r != length) {
         if (r == -1) {
             err_set2(err, "read: %s", strerror(errno));

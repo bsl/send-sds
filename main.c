@@ -81,21 +81,33 @@ int main(int argc, char **argv) {
     filename = argv[4];
 
     if (!convert_channel_num(channel_string, &channel_num, err)) {
+        fprintf(stderr, "convert_channel_num failed: %s\n", err_get(err));
+        exit(1);
     }
 
     if (!convert_sample_num(sample_string, &sample_num, err)) {
+        fprintf(stderr, "convert_sample_num failed: %s\n", err_get(err));
+        exit(1);
     }
 
     if (!midi_open_interface(device, &midi, err)) {
+        fprintf(stderr, "midi_open_interface failed: %s\n", err_get(err));
+        exit(1);
     }
 
     if (!sds_open_file(filename, &fd, err)) {
+        fprintf(stderr, "sds_open_file failed: %s\n", err_get(err));
+        exit(1);
     }
 
     if (!sds_get_file_size(fd, &file_size, err)) {
+        fprintf(stderr, "sds_get_file_size failed: %s\n", err_get(err));
+        exit(1);
     }
 
     if (!sds_file_size_is_ok(file_size, err)) {
+        fprintf(stderr, "sds_file_size_is_ok failed: %s\n", err_get(err));
+        exit(1);
     }
 
     if (!send_file(fd, file_size, midi, channel_num, sample_num, err)) {
@@ -121,7 +133,7 @@ static int end(err_t* err, int fd, midi_t* midi, int ret) {
 
 static void display_usage(void) {
     fprintf(stderr, "send-sds " VERSION "\n"
-            "usage: <alsa-device> <channel-num> <sample-num> <sds-filename>\n");
+            "usage: send-sds <alsa-device> <channel-num> <sample-num> <sds-filename>\n");
     exit(1);
 }
 
@@ -186,6 +198,8 @@ static int send_file(int fd, size_t file_size, midi_t midi,
 
     if (!sds_read_header(fd, buf, sizeof(buf), err)) {
         return 0;
+    } else {
+        sds_display_header(buf);
     }
 
     /* patch in channel number */
