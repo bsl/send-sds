@@ -7,11 +7,16 @@ libraries = -lasound
 
 rm = rm -f
 
-all: send-sds
+all: send-sds receive-sds
 
 send-sds: $(sources) $(headers)
 	$(compiler) $(compiler_flags) -o $@ $(sources) $(libraries)
 
+receive-sds: receive-sds.c
+	$(compiler) $(compiler_flags) -o $@ $(sources) $(libraries)
+
 .PHONY: clean
+
 clean:
 	-$(rm) send-sds
+	-$(rm) receive-sds
