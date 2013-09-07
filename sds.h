@@ -16,11 +16,13 @@
 /*
   Dump Header
   F0 7E cc 01 sl sh ee pl pm ph gl gm gh hl hm hh il im ih jj F7
-  
+
   Where
   > ... cc represents the SysEx channel that the message is being sent upon.
+
   and
-  > There are 128 possible SysEx channels that a device can be set to (ie, 0 to 127).
+  > There are 128 possible SysEx channels that a device can be set to
+  > (ie, 0 to 127).
   > This allows various devices to be set to different SysEx channels along
   > the daisy-chain, and have the dump occur between 2 particular devices
   > with matching SysEx channels.
@@ -44,5 +46,7 @@ int sds_read_header(int fd, unsigned char *buf, size_t buf_size, err_t err);
 int sds_display_header(unsigned char *buf);
 
 int sds_read_packet(int fd, unsigned char *buf, size_t buf_size, err_t err);
+
+#define max(a,b) ((a) > (b) ? (a) : (b))
 
 #endif

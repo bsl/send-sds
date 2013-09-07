@@ -184,8 +184,6 @@ static int convert_string_to_unsigned_int(char *s, unsigned int *ui) {
     return 1;
 }
 
-#define max(a,b) ((a) > (b) ? (a) : (b))
-
 /*
  * TODO: Improve error handling by refactoring err_t
  */
