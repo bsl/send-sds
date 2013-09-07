@@ -1,7 +1,8 @@
 Forked from [bsl/send-sds][1].
 
-libmidisds is a C library intended for interfacing your Linux system
-with devices supporting the MIDI Sample Dump Standard.
+libmidisds is a command-line tool intended for interfacing
+your Linux system with devices supporting the MIDI
+Sample Dump Standard.
 
 ### Dependencies
 * gcc
