@@ -1,33 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
+#include "midisds_common.h"
 
-#include "meta.h"
-#include "err.h"
-#include "midi.h"
-#include "sds.h"
+// ==========
+// prototypes
+// ==========
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-typedef enum {
-    STATE0,  /* seen [],             hoping for f0             */
-    STATE1,  /* seen [f0]            hoping for 7e             */
-    STATE2,  /* seen [f0,7e]         hoping for channel number */
-    STATE3,  /* seen [f0,7e,CN]      hoping for 7{c,d,e,f}     */
-    STATE4,  /* seen [f0,7e,CN,x]    hoping for packet number  */
-    STATE5,  /* seen [f0,7e,CN,x,PN] hoping for f7             */
-} response_state_t;
-
-typedef enum {
-    RESPONSE_ACK,
-    RESPONSE_NAK,
-    RESPONSE_CANCEL,
-    RESPONSE_WAIT
-} response_t;
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+static int midisds_read(int fd, size_t length, unsigned char *buf,
+                        size_t buf_size);
 
 static void display_usage(void);
 
@@ -47,88 +25,73 @@ static int get_response(midi_t midi, unsigned int channel_num,
 
 static const char * response_to_string(response_t response);
 
-static int end(err_t*, int, midi_t*, int);
+// =========
+// functions
+// =========
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-int main(int argc, char **argv) {
-    int ret;
-    char *device, *channel_string, *sample_string, *filename;
-    unsigned int channel_num, sample_num;
+int midisds_open_file(const char *filename, int *fd_r) {
     int fd;
-    size_t file_size;
-    err_t err;
-    midi_t midi;
+    fd = open(filename, O_RDONLY);
 
-    ret = 1;
-    device = NULL;
-    filename = NULL;
-    channel_string = NULL;
-    sample_string = NULL;
-    channel_num = 0;
-    fd = 0;
-    err = err_create(256);
-    midi = NULL;
-
-    if (argc != 1+4) {
-        display_usage();
+    if (fd == -1) {
+        err_set2(err, "open \"%s\": %s", filename, strerror(errno));
+        return 0;
     }
 
-    device = argv[1];
-    channel_string = argv[2];
-    sample_string = argv[3];
-    filename = argv[4];
-
-    if (!convert_channel_num(channel_string, &channel_num, err)) {
-        fprintf(stderr, "convert_channel_num failed: %s\n", err_get(err));
-        exit(1);
-    }
-
-    if (!convert_sample_num(sample_string, &sample_num, err)) {
-        fprintf(stderr, "convert_sample_num failed: %s\n", err_get(err));
-        exit(1);
-    }
-
-    if (!midi_open_interface(device, &midi, err)) {
-        fprintf(stderr, "midi_open_interface failed: %s\n", err_get(err));
-        exit(1);
-    }
-
-    if (!sds_open_file(filename, &fd, err)) {
-        fprintf(stderr, "sds_open_file failed: %s\n", err_get(err));
-        exit(1);
-    }
-
-    if (!sds_get_file_size(fd, &file_size, err)) {
-        fprintf(stderr, "sds_get_file_size failed: %s\n", err_get(err));
-        exit(1);
-    }
-
-    if (!sds_file_size_is_ok(file_size, err)) {
-        fprintf(stderr, "sds_file_size_is_ok failed: %s\n", err_get(err));
-        exit(1);
-    }
-
-    if (!send_file(fd, file_size, midi, channel_num, sample_num, err)) {
-        fprintf(stderr, "%s\n", err_get(err));
-    }
-
-    return end(&err, fd, &midi, ret);
+    *fd_r = fd;
+    return 1;
 }
 
-static int end(err_t* err, int fd, midi_t* midi, int ret) {
-    err_destroy(*err);
+int midisds_get_file_size(int fd, size_t *size) {
+    struct stat buf;
 
-    if (fd) {
-        close(fd);
+    if (fstat(fd, &buf) == -1) {
+        err_set2(err, "stat: %s", strerror(errno));
+        return 0;
     }
 
-    midi_close_interface(*midi);
-
-    return ret;
+    *size = buf.st_size;
+    return 1;
 }
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+int midisds_file_size_is_ok(size_t size) {
+    if ((size < MIDISDS_HEADER_LENGTH)
+        || ((size - MIDISDS_HEADER_LENGTH) % MIDISDS_PACKET_LENGTH != 0)) {
+        err_set2(err, "bad file size (%d)", size);
+        return 0;
+    }
+
+    return 1;
+}
+
+/* assumes midisds_file_size_is_ok(size, ...) */
+unsigned int midisds_calc_num_packets(size_t size) {
+    return (size - MIDISDS_HEADER_LENGTH) / MIDISDS_PACKET_LENGTH;
+}
+
+int midisds_read_header(int fd, unsigned char *buf, size_t buf_size) {
+    return midisds_read(fd, MIDISDS_HEADER_LENGTH, buf, buf_size, err);
+}
+
+/* assumes midisds_read_header has already read data into buf */
+int midisds_display_header(unsigned char* buf) {
+    int i;
+
+    printf("MIDISDS HEADER: ");
+    for (i = 0; i < MIDISDS_HEADER_LENGTH; i++) {
+        printf("%X ", buf[i]);
+    }
+    printf("\n");
+    return 1;
+}
+
+int midisds_read_packet(int fd, unsigned char *buf, size_t buf_size) {
+    return midisds_read(fd, MIDISDS_PACKET_LENGTH, buf, buf_size);
+}
+
+/*
+ * Private static functions
+ */
 
 static void display_usage(void) {
     fprintf(stderr, "send-sds " VERSION "\n"
@@ -324,4 +287,29 @@ static const char * response_to_string(response_t response) {
     }
 
     return "UNKNOWN";
+}
+static int midisds_read(int fd, size_t length, unsigned char *buf,
+                        size_t buf_size) {
+    ssize_t r;
+
+    if (length > buf_size) {
+        err_set2(err, "supposed to read %d bytes, buffer size only %d",
+                 length, buf_size);
+        return 0;
+    }
+
+    r = read(fd, buf, length);
+
+    if ((size_t)r != length) {
+        if (r == -1) {
+            err_set2(err, "read: %s", strerror(errno));
+        } else {
+            err_set2(err, "read: tried to read %d bytes, actually read %d",
+                     length, r);
+        }
+
+        return 0;
+    }
+
+    return 1;
 }

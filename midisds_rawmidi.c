@@ -5,7 +5,7 @@
 
 #include <alsa/asoundlib.h>
 
-#include "midi.h"
+#include "midisds_rawmidi.h"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 

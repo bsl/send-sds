@@ -1,23 +1,20 @@
 Forked from [bsl/send-sds][1].
 
-send-sds is a utility for sending SDS (MIDI Sample Dump Standard) files to
-samplers from Linux using the ALSA MIDI API.
+libmidisds is a C library intended for interfacing your Linux system
+with devices supporting the MIDI Sample Dump Standard.
 
-To convert an audio file to SDS, I use [libsndfile][2]'s sndfile-convert
-utility. _WARNING_: use libsndfile 1.0.23 or later -- previous versions had
-bugs that caused the creation of invalid SDS files.
+### Dependencies
+* gcc
+* make
+* libasound
+* libsndfile
 
-    $ amidi -l
+### Commmand Line Interface
+    $ midi-sds -l
     Dir Device    Name
     IO  hw:1,0,0  Elektron TM-1 MIDI 1
 
-    $ sndfile-convert foo.wav foo.sds
-
-    $ send-sds
-    send-sds 2010.10.23
-    usage: <alsa-device> <channel-num> <sample-num> <sds-filename>
-
-    $ send-sds hw:1,0,0 0 2 foo.sds
+    $ midi-sds send hw:1,0,0 sample.{wav,flac,aiff,sds,...}
 
 [1]: http://github.com/bsl/send-sds/
 [2]: http://www.mega-nerd.com/libsndfile/

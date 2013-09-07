@@ -1,9 +1,9 @@
-#ifndef __MIDI_H__
-#define __MIDI_H__
+#ifndef MIDISDS_RAWMIDI_H
+#define MIDISDS_RAWMIDI_H
 
 #include <stdio.h>
 
-#include "err.h"
+#include "midisds_err.h"
 
 /* make midi_t opaque */
 struct midi;
