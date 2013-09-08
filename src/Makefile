@@ -9,7 +9,7 @@ rm = rm -f
 
 all: midisds
 
-midisds: midisds_main.o
+midisds: midisds_main.c
 	$(CC) $(CFLAGS) -o $@ midisds_main.c $(LDLIBS)
 
 clean:
