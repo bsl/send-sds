@@ -9,7 +9,8 @@ rm = rm -f
 
 all: midisds
 
-midisds: midisds.o midisds_send.o midisds_receive.o midisds_dump.o
+midisds: midisds_main.o
+	$(CC) $(CFLAGS) -o $@ midisds_main.c $(LDLIBS)
 
 clean:
 	-$(rm) *.o *~ midisds
