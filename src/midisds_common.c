@@ -11,7 +11,7 @@ static void display_usage(void);
 
 static int convert_channel_num(char *s, unsigned int *channel_num, err_t err);
 
-static int convert_sample_num(char *s, unsigned int *channel_num, err_t err);
+static int get_sample_num(unsigned char sl, unsigned char sh);
 
 static int convert_string_to_unsigned_int(char *s, unsigned int *ui);
 
@@ -28,6 +28,85 @@ static const char * response_to_string(response_t response);
 // =========
 // functions
 // =========
+
+/*
+  From [http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/sds.htm]
+  ..................................................................
+
+  Dump Header
+  F0 7E cc 01 sl sh ee pl pm ph gl gm gh hl hm hh il im ih jj F7
+  ...
+  > cc represents the SysEx channel that the message is being sent upon.
+  > There are 128 possible SysEx channels that a device can be set to
+  > (ie, 0 to 127).
+  > This allows various devices to be set to different SysEx channels along
+  > the daisy-chain, and have the dump occur between 2 particular devices
+  > with matching SysEx channels.
+  ...
+  > The sl sh is the 14-bit number (ie 0 to 16,384) of the waveform
+  > which the receiver is requesting from the transmitter.
+  > Most samplers number their internal waveforms from 0 to how ever
+  > many waveforms there are. Note that the 14-bit sample number
+  > is transmitted as 2 bytes where the first byte (sl) contains
+  > bits 0 to 6 (with high bit clear), and the second byte (sh)
+  > contains bits 7 to 13, right-justified (with high bit clear).
+  ...
+  > ee is the number of significant bits of the waveform.
+  > For example, a 16-bit resolution waveform would have a 16 here.
+  ...
+  > pl pm ph is the sample period in nanoseconds
+  > (ie, 1,000,000,000/sample rate in Hertz).
+  > For example, a waveform sampled at 41667 Hertz will have a period of
+  > 23,999 nanoseconds.
+  > This value is transmitted as 3 bytes where pl is bits 0 to 6,
+  > pm is bits 7 to 13 right-justified, and ph is bits 14 to 20
+  > right-justified (ie, for a total of 20 bits of resolution)
+  > with the high bit of all 3 bytes clear. So, our 23,999
+  > (0x5DBF) becomes the 3 bytes 3F 3B 01.
+  ...
+  gl gm gh is the waveform length in words. (What this implies is that
+  if you have 8-bit or less resolution, the waveform length will be
+  half the number of sample points that you intend to dump.
+  You always end up having to send an even number of points).
+  ...
+  > hl hm hh is the word offset (from 0, ie, the very first sample point
+  > in the waveform) where the sustain loop starts.
+  ...
+  > il im ih is the word offset where the sustain loop ends
+  > (ie, where the playback loops back to the sustain loop start).
+  ...
+  > jj is the looptype where 00 means "forward only" (most common)
+  > and 01 means "backward/forward", and 7F means "no loop point"
+  > (ie, the waveform is played through once only without looping).
+  > Note that older MIDI samplers didn't support the 7F value for looptype.
+  > For these older samplers, usually, if you set both th start and end loop
+  > points to the same value as the waveform length, a sampler will consider
+  > this to be a non-looped waveform. So to be safe, when you want to
+  > indicate that a waveform is not to be looped, you should set looptype
+  > to 7F, and set the start and end loop positions to the same value
+  > as the waveform's length.
+*/
+int midisds_parse_header(const unsigned char *buf, size_t buf_size,
+                         midi_sds_header *hdr) {
+    int errval = 0;
+
+    // TODO: better error handling
+    if (buf_size < MIDISDS_HEADER_LENGTH) {
+        return errval;
+    } else if (buf[0] != 0xF0) {
+        return errval;
+    } else if (buf[1] != 0x7E) {
+        return errval;
+    } else {
+        hdr.sysex_channel = (int) buf[2];
+    }
+
+    if (buf[3] != 1) {
+        return errval;
+    } else if () {
+        return 1;
+    }
+}
 
 int midisds_open_file(const char *filename, int *fd_r) {
     int fd;
@@ -116,20 +195,16 @@ static int convert_channel_num(char *s, unsigned int *channel_num, err_t err) {
     return 1;
 }
 
-static int convert_sample_num(char *s, unsigned int *sample_num, err_t err) {
+static int get_sample_num(unsigned char sl, unsigned char sh) {
     unsigned int ui;
 
-    if (!convert_string_to_unsigned_int(s, &ui)) {
-        err_set2(err, "invalid sample number \"%s\"", s);
-        return 0;
-    }
-
+    // TODO: better error handling
     if (ui > 16383) {
-        err_set2(err, "invalid sample number \"%s\", should be 0..16383", s);
+        // error invalid sample num
+        return 0;
+    } else {
+        return ui;
     }
-
-    *sample_num = ui;
-    return 1;
 }
 
 static int convert_string_to_unsigned_int(char *s, unsigned int *ui) {
@@ -235,43 +310,43 @@ static int get_response(midi_t midi, unsigned int channel_num,
         }
 
         switch (state) {
-            case STATE0:
-                state = (c == 0xf0) ? STATE1 : STATE0;
-                break;
+        case STATE0:
+            state = (c == 0xf0) ? STATE1 : STATE0;
+            break;
 
-            case STATE1:
-                state = (c == 0x7e) ? STATE2 : STATE0;
-                break;
+        case STATE1:
+            state = (c == 0x7e) ? STATE2 : STATE0;
+            break;
 
-            case STATE2:
-                state = (c == channel_num) ? STATE3 : STATE0;
-                break;
+        case STATE2:
+            state = (c == channel_num) ? STATE3 : STATE0;
+            break;
 
-            case STATE3:
-                state = (c >= 0x7c && c <= 0x7f) ? STATE4 : STATE0;
-                x = c;
-                break;
+        case STATE3:
+            state = (c >= 0x7c && c <= 0x7f) ? STATE4 : STATE0;
+            x = c;
+            break;
 
-            case STATE4:
-                state = (c == modded_packet_num) ? STATE5 : STATE0;
-                break;
+        case STATE4:
+            state = (c == modded_packet_num) ? STATE5 : STATE0;
+            break;
 
-            case STATE5:
-                if (c == 0xf7) {
-                    done = 1;
+        case STATE5:
+            if (c == 0xf7) {
+                done = 1;
 
-                    switch (x) {
-                        case 0x7c: *response = RESPONSE_WAIT;
-                        case 0x7d: *response = RESPONSE_CANCEL;
-                        case 0x7e: *response = RESPONSE_NAK;
-                        case 0x7f: *response = RESPONSE_ACK;
-                    }
-
-                    return 1;
-                } else {
-                    state = STATE0;
+                switch (x) {
+                case 0x7c: *response = RESPONSE_WAIT;
+                case 0x7d: *response = RESPONSE_CANCEL;
+                case 0x7e: *response = RESPONSE_NAK;
+                case 0x7f: *response = RESPONSE_ACK;
                 }
-                break;
+
+                return 1;
+            } else {
+                state = STATE0;
+            }
+            break;
         }
     }
 
@@ -280,10 +355,10 @@ static int get_response(midi_t midi, unsigned int channel_num,
 
 static const char * response_to_string(response_t response) {
     switch (response) {
-        case RESPONSE_ACK:    return "ACK";
-        case RESPONSE_NAK:    return "NAK";
-        case RESPONSE_CANCEL: return "CANCEL";
-        case RESPONSE_WAIT:   return "WAIT";
+    case RESPONSE_ACK:    return "ACK";
+    case RESPONSE_NAK:    return "NAK";
+    case RESPONSE_CANCEL: return "CANCEL";
+    case RESPONSE_WAIT:   return "WAIT";
     }
 
     return "UNKNOWN";

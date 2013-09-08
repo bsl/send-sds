@@ -8,57 +8,111 @@
 #include "midisds_receive.h"
 #include "midisds_send.h"
 
+#define MIDISDS_NUM_COMMANDS              5
+// 1 less than members of enum because last one is "unknown"
+#define MIDISDS_NUM_SUPPORTED_COMMANDS    4
+
 typedef enum {
-    MIDISDS_UNKNOWN,
-    MIDISDS_SEND,
-    MIDISDS_RECEIVE,
-    MIDISDS_DUMP
+    MIDISDS_COMMAND_SEND,
+    MIDISDS_COMMAND_RECEIVE,
+    MIDISDS_COMMAND_DUMP,
+    MIDISDS_COMMAND_INTERFACE_LIST,
+    MIDISDS_COMMAND_UNKNOWN
 } MIDISDS_COMMAND;
 
-void print_usage_exit(void);
-MIDISDS_COMMAND string_to_command(const char*);
-const char *command_to_string(MIDISDS_COMMAND cmd);
+const struct {
+    const MIDISDS_COMMAND cmd;
+    const char *str;
+} MIDISDS_COMMAND_MAP[MIDISDS_NUM_COMMANDS] = {
+    { MIDISDS_COMMAND_SEND, "send" },
+    { MIDISDS_COMMAND_RECEIVE, "receive" },
+    { MIDISDS_COMMAND_DUMP, "dump" },
+    { MIDISDS_COMMAND_INTERFACE_LIST, "iflist" },
+    { MIDISDS_COMMAND_UNKNOWN, "unknown" }
+};
+
+static void print_usage_exit(void);
+static MIDISDS_COMMAND string_to_command(const char*);
+/* static const char *command_to_string(MIDISDS_COMMAND cmd); */
+static int midisds_supported_commands(char **buf, size_t buf_size);
+static int midisds_iflist(void);
 
 int main(int argc, char** argv) {
     char *command_string;
-    MIDISDS_COMMAND command = MIDISDS_UNKNOWN;
+    MIDISDS_COMMAND command = MIDISDS_COMMAND_UNKNOWN;
 
-    if (argc != 2) {
+    if (argc < 2) {
         print_usage_exit();
     }
 
     command_string = argv[1];
     command = string_to_command(command_string);
 
-    printf("executing %s\n", command_to_string(command));
+    switch(command) {
+    case MIDISDS_COMMAND_INTERFACE_LIST:
+        return midisds_iflist();
+    default:
+        print_usage_exit();
+    }
 
     return 0;
 }
 
-MIDISDS_COMMAND string_to_command(const char *str) {
-    if (strcasecmp(str, "send") == 0) {
-        return MIDISDS_SEND;
-    } else if (strcasecmp(str, "receive") == 0) {
-        return MIDISDS_RECEIVE;
-    } else if (strcasecmp(str, "dump") == 0) {
-        return MIDISDS_DUMP;
+// ====================================
+// mapping between commands and strings
+// ====================================
+
+static MIDISDS_COMMAND string_to_command(const char *str) {
+    int i;
+    for (i = 0; i < MIDISDS_NUM_COMMANDS; i++) {
+        if (strcasecmp(str, MIDISDS_COMMAND_MAP[i].str) == 0) {
+            return MIDISDS_COMMAND_MAP[i].cmd;
+        }
+    }
+    return MIDISDS_COMMAND_UNKNOWN;
+}
+
+/* static const char *command_to_string(MIDISDS_COMMAND cmd) { */
+/*     int i; */
+/*     for (i = 0; i < MIDISDS_NUM_COMMANDS; i++) { */
+/*         if (MIDISDS_COMMAND_MAP[i].cmd == cmd) { */
+/*             return MIDISDS_COMMAND_MAP[i].str; */
+/*         } */
+/*     } */
+/*     return "unknown"; */
+/* } */
+
+static int midisds_supported_commands(char **buf, size_t buf_size) {
+    int i;
+
+    if (buf_size < MIDISDS_NUM_SUPPORTED_COMMANDS) {
+        return 0; // TODO: better error handling
     } else {
-        return MIDISDS_UNKNOWN;
+        // notice we skip "unknown"
+        for (i = 0; i < MIDISDS_NUM_SUPPORTED_COMMANDS; i++) {
+            buf[i] = MIDISDS_COMMAND_MAP[i].str;
+        }
+        return MIDISDS_NUM_SUPPORTED_COMMANDS;
     }
 }
 
-const char *command_to_string(MIDISDS_COMMAND cmd) {
-    switch (cmd) {
-    case MIDISDS_SEND:
-        return "send";
-    case MIDISDS_RECEIVE:
-        return "receive";
-    case MIDISDS_DUMP:
-        return "dump";
-    default:
-        return "unknown";
-    }
+static int midisds_iflist(void) {
+    return system("amidi -l");
 }
 
-void print_usage_exit(void) {
+static void print_usage_exit(void) {
+    int i;
+    char *cmds_buf[MIDISDS_NUM_SUPPORTED_COMMANDS];
+
+    if (! midisds_supported_commands(cmds_buf,
+                                     MIDISDS_NUM_SUPPORTED_COMMANDS)) {
+        exit(1); // TODO: better error handling
+    } else {
+        printf("usage: midisds command [options]\n");
+        printf("supported commands:\n");
+        for (i = 0; i < MIDISDS_NUM_SUPPORTED_COMMANDS; i++) {
+            printf("* %s\n", cmds_buf[i]);
+        }
+        exit(0);
+    }
 }

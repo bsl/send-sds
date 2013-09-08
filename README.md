@@ -1,9 +1,15 @@
-Forked from [bsl/send-sds][1].
+libmidisds is a C library that uses alsa and libsndfile
+to interface your Linux system with devices supporting
+the MIDI Sample Dump Standard.
+Right now it is a just a command-line tool to get the
+basic functionality tested and working. Eventually I will
+package it as a shared library.
+This tool was born out of frustration with the lack
+of SDS send/receive support on Linux. Much of the code is
+taken directly from [bsl/send-sds][1].
 
-libmidisds will one day be a cross-platform C library
-for interfacing your Linux system with
-devices supporting the MIDI Sample Dump Standard.
-Right now it is a just a command-line tool.
+### Supported Devices
+* Elektron Machinedrum SPS-1 UW (OS 1.63)
 
 ### Dependencies
 * gcc
