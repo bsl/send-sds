@@ -1,19 +1,17 @@
 rm = rm -rf
+directories := bin lib
 binaries := midisds
 binaries := $(addprefix "src/", $(binaries))
 
 .PHONY: clean all bin lib
 
-all: bin lib
+all: dirs
 	$(MAKE) -C src && \
 	mv $(binaries) bin
 
-bin:
-	mkdir bin
-
-lib:
-	mkdir lib
+dirs:
+	mkdir $(directories)
 
 clean:
-	-$(rm) bin
+	-$(rm) $(directories)
 	$(MAKE) -C src clean
