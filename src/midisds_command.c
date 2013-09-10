@@ -1,3 +1,4 @@
+#include <string.h>
 #include <strings.h>
 #include <stdlib.h>
 
@@ -39,51 +40,51 @@ MIDISDS_COMMAND_INFO MIDISDS_COMMAND_INFO_ARR[MIDISDS_NUM_COMMANDS] = {
 // function definitions
 // ====================
 
-int midisds_num_commands(void) {
+size_t midisds_num_commands(void) {
     return MIDISDS_NUM_COMMANDS;
 }
 
-int midisds_num_supported_commands(void) {
+size_t midisds_num_supported_commands(void) {
     return MIDISDS_NUM_SUPPORTED_COMMANDS;
 }
 
-MIDISDS_COMMAND_INFO get_command_info(const char *cmd) {
-    int i;
-    int ncmds = midisds_num_commands();
-    int suppcmds = midisds_num_supported_commands();
+MIDISDS_COMMAND_INFO midisds_get_command_info(const char *cmd) {
+    size_t i;
+    size_t ncmds = midisds_num_commands();
+    size_t suppcmds = midisds_num_supported_commands();
 
     for (i = 0; i < ncmds; i++) {
-        MIDISDS_COMMAND_INFO cmdinfo = MIDISDS_COMMAND_INFO_ARR[i];
-        if (strcasecmp(cmdinfo.str, cmd) == 0) {
-            return cmdinfo;
+        MIDISDS_COMMAND_INFO ci = MIDISDS_COMMAND_INFO_ARR[i];
+        if (strcasecmp(ci.str, cmd) == 0) {
+            return ci;
         }
     }
 
-    // hack -- should return UNKNOWN
+    // should return UNKNOWN
     return MIDISDS_COMMAND_INFO_ARR[suppcmds];
 }
 
 MIDISDS_COMMAND midisds_string_to_command(const char *str) {
-    return get_command_info(str).cmd;
+    return midisds_get_command_info(str).cmd;
 }
 
 int midisds_supported_commands(char **buf, size_t buf_size) {
-    int i;
-    int suppcmds = midisds_num_supported_commands();
+    size_t i;
+    size_t suppcmds = midisds_num_supported_commands();
 
     if (buf_size < suppcmds) {
         return 0; // TODO: better error handling
     } else {
         // notice we skip "unknown"
         for (i = 0; i < suppcmds; i++) {
-            buf[i] = MIDISDS_COMMAND_INFO_ARR[i].str;
+            strcpy(buf[i], MIDISDS_COMMAND_INFO_ARR[i].str);
         }
         return suppcmds;
     }
 }
 
 int midisds_command_desc(char *cmd, char *buf, size_t buf_size) {
-    MIDISDS_COMMAND_INFO cmdinfo = get_command_info(cmd);
+    MIDISDS_COMMAND_INFO cmdinfo = midisds_get_command_info(cmd);
 
     if (buf_size < sizeof cmdinfo.desc) {
         return 0;
