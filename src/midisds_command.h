@@ -12,7 +12,7 @@ typedef enum {
 } MIDISDS_COMMAND;
 
 typedef struct {
-    MIDISDS_COMMAND cmd;
+    const MIDISDS_COMMAND cmd;
     const char *str;
     const char *desc;
 } MIDISDS_COMMAND_INFO;
