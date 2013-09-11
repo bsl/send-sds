@@ -1,37 +1,53 @@
+#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
 
 #include "midisds_command.h"
 
-#define MIDISDS_NUM_COMMANDS 5
+#define MIDISDS_NUM_COMMANDS 6
 // 1 less than members of enum because last one is "unknown"
-#define MIDISDS_NUM_SUPPORTED_COMMANDS 4
+#define MIDISDS_NUM_SUPPORTED_COMMANDS 5
 
 MIDISDS_COMMAND_INFO MIDISDS_COMMAND_INFO_ARR[MIDISDS_NUM_COMMANDS] = {
     {
         MIDISDS_COMMAND_SEND,
         "send",
-        "Send a sample to a device"
+        "Send a sample to a device",
+        "usage: midisds send [options] <audio_sample>\n\n"
+        "options:\n"
+        "  -p    ALSA midi port (get with midisds iflist)"
     },
     {
         MIDISDS_COMMAND_RECEIVE,
         "receive",
-        "Receive a sample from a device"
+        "Receive a sample from a device",
+        "usage: midisds receive [options] <output_file>\n\n"
+        "options:\n"
+        "  -p    ALSA midi port (get with midisds iflist)"
     },
     {
         MIDISDS_COMMAND_DUMP,
         "dump",
-        "Print info about a sample to stdout"
+        "Print info about a sample to stdout",
+        "usage: midisds dump <input_file>"
     },
     {
         MIDISDS_COMMAND_INTERFACE_LIST,
         "iflist",
-        "List available midi devices (uses 'amidi -l')"
+        "List available midi devices (uses 'amidi -l')",
+        "usage: midisds iflist"
+    },
+    {
+        MIDISDS_COMMAND_HELP,
+        "help",
+        "Get help with a particular command",
+        "usage: midisds help <command>"
     },
     {
         MIDISDS_COMMAND_UNKNOWN,
         "unknown",
+        "Unknown command",
         "Unknown command"
     }
 };
@@ -40,18 +56,18 @@ MIDISDS_COMMAND_INFO MIDISDS_COMMAND_INFO_ARR[MIDISDS_NUM_COMMANDS] = {
 // function definitions
 // ====================
 
-size_t midisds_num_commands(void) {
+int midisds_num_commands(void) {
     return MIDISDS_NUM_COMMANDS;
 }
 
-size_t midisds_num_supported_commands(void) {
+int midisds_num_supported_commands(void) {
     return MIDISDS_NUM_SUPPORTED_COMMANDS;
 }
 
 MIDISDS_COMMAND_INFO midisds_get_command_info(const char *cmd) {
-    size_t i;
-    size_t ncmds = midisds_num_commands();
-    size_t suppcmds = midisds_num_supported_commands();
+    int i;
+    int ncmds = midisds_num_commands();
+    int suppcmds = midisds_num_supported_commands();
 
     for (i = 0; i < ncmds; i++) {
         MIDISDS_COMMAND_INFO ci = MIDISDS_COMMAND_INFO_ARR[i];
@@ -68,30 +84,21 @@ MIDISDS_COMMAND midisds_string_to_command(const char *str) {
     return midisds_get_command_info(str).cmd;
 }
 
-int midisds_supported_commands(char **buf, size_t buf_size) {
-    size_t i;
-    size_t suppcmds = midisds_num_supported_commands();
+// Copy command information into buf
+int midisds_supported_commands(char *buf, size_t buf_size) {
+    int i;
+    int suppcmds = midisds_num_supported_commands();
+    char cmd_buf[buf_size / suppcmds];
 
-    if (buf_size < suppcmds) {
-        return 0; // TODO: better error handling
-    } else {
-        // notice we skip "unknown"
-        for (i = 0; i < suppcmds; i++) {
-            strcpy(buf[i], MIDISDS_COMMAND_INFO_ARR[i].str);
-        }
-        return suppcmds;
+    // notice we skip "unknown"
+    for (i = 0; i < suppcmds; i++) {
+        MIDISDS_COMMAND_INFO cmdinfo = MIDISDS_COMMAND_INFO_ARR[i];
+        cmd_buf[0] = '\0';
+        sprintf(cmd_buf, "  %-12s %s\n", cmdinfo.str, cmdinfo.desc);
+        strcat(buf, cmd_buf);
     }
-}
 
-int midisds_command_desc(char *cmd, char *buf, size_t buf_size) {
-    MIDISDS_COMMAND_INFO cmdinfo = midisds_get_command_info(cmd);
-
-    if (buf_size < sizeof cmdinfo.desc) {
-        return 0;
-    } else {
-        strcpy(buf, cmdinfo.desc);
-        return 1;
-    }
+    return suppcmds;
 }
 
 int midisds_iflist(void) {
@@ -99,3 +106,9 @@ int midisds_iflist(void) {
     return system("amidi -l");
 }
 
+// returns an exit code
+int midisds_help(MIDISDS_COMMAND cmd) {
+    MIDISDS_COMMAND_INFO info = MIDISDS_COMMAND_INFO_ARR[cmd];
+    printf("%s\n%s\n", info.desc, info.help);
+    return 0;
+}

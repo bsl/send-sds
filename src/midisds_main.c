@@ -8,14 +8,16 @@
 #include "midisds_receive.h"
 #include "midisds_send.h"
 
-static int print_usage(void);
+void print_usage(void);
 
 int main(int argc, char** argv) {
     char *command_string;
     MIDISDS_COMMAND command = MIDISDS_COMMAND_UNKNOWN;
+    int exit_code = 0;
 
     if (argc < 2) {
         print_usage();
+        exit_code = 1;
     }
 
     command_string = argv[1];
@@ -23,39 +25,32 @@ int main(int argc, char** argv) {
 
     switch(command) {
     case MIDISDS_COMMAND_INTERFACE_LIST:
-        return midisds_iflist();
+        exit_code = midisds_iflist();
+        break;
+    case MIDISDS_COMMAND_HELP:
+        if (argc < 3) {
+            // help with getting help
+            midisds_help(MIDISDS_COMMAND_HELP);
+            exit_code = 1;
+        } else {
+            exit_code = midisds_help(midisds_string_to_command(argv[2]));
+        }
+        break;
     default:
-        return print_usage();
+        print_usage();
+        exit_code = 0;
     }
 
-    return 0;
+    return exit_code;
 }
 
-static int print_usage(void) {
-    int i;
+// Returns an exit code
+void print_usage(void) {
     int ncmds = midisds_num_supported_commands();
-    char *cmds_buf[ncmds];
-
-    if (! midisds_supported_commands(cmds_buf, ncmds)) {
-        return 1;
-    } else {
-        printf("usage: midisds <command> [options]\n");
-        printf("\ncommands:\n");
-        for (i = 0; i < ncmds; i++) {
-            size_t desc_buf_size = 400;
-            char desc[desc_buf_size];
-            desc[0] = '\0';
-
-            if (midisds_command_desc(cmds_buf[i], desc, desc_buf_size)) {
-                printf("  %-12s %s\n", cmds_buf[i], desc);
-            } else {
-                // causes compiler warning about unsupported format specifier
-                // fprintf(stderr, "Error getting command description: %m\n");
-                return 2;
-            }
-        }
-        printf("See 'midisds help <command>' "
-               "for more help with a specific command.\n");
-        exit(0);
-    }
+    const int BUF_SIZE = 200 * ncmds;
+    char cmd_info_buf[BUF_SIZE];
+    cmd_info_buf[0] = '\0';
+    midisds_supported_commands(cmd_info_buf, (size_t) BUF_SIZE);
+    printf("usage: midisds <command> [options]\n");
+    printf("\ncommands:\n%s", cmd_info_buf);
 }
