@@ -3,6 +3,6 @@
 
 #include "midisds_common.h"
 
-void midisds_dump(void);
+int midisds_dump(const char *filename);
 
 #endif

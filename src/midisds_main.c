@@ -29,11 +29,18 @@ int main(int argc, char** argv) {
         break;
     case MIDISDS_COMMAND_HELP:
         if (argc < 3) {
-            // help with getting help
             midisds_help(MIDISDS_COMMAND_HELP);
             exit_code = 1;
         } else {
             exit_code = midisds_help(midisds_string_to_command(argv[2]));
+        }
+        break;
+    case MIDISDS_COMMAND_DUMP:
+        if (argc < 3) {
+            midisds_help(MIDISDS_COMMAND_DUMP);
+            exit_code = 1;
+        } else {
+            exit_code = midisds_dump(argv[2]);
         }
         break;
     default:
