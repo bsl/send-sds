@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
 
     if (argc < 2) {
         print_usage();
-        exit_code = 1;
+        exit(1);
     }
 
     command_string = argv[1];
