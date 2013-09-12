@@ -5,9 +5,9 @@
 
 #include "midisds_command.h"
 
-#define MIDISDS_NUM_COMMANDS 6
+#define MIDISDS_NUM_COMMANDS 7
 // 1 less than members of enum because last one is "unknown"
-#define MIDISDS_NUM_SUPPORTED_COMMANDS 5
+#define MIDISDS_NUM_SUPPORTED_COMMANDS 6
 
 MIDISDS_COMMAND_INFO MIDISDS_COMMAND_INFO_ARR[MIDISDS_NUM_COMMANDS] = {
     {
@@ -31,6 +31,12 @@ MIDISDS_COMMAND_INFO MIDISDS_COMMAND_INFO_ARR[MIDISDS_NUM_COMMANDS] = {
         "dump",
         "Print info about a sample to stdout",
         "usage: midisds dump <input_file>"
+    },
+    {
+        MIDISDS_COMMAND_CONVERT,
+        "convert",
+        "Convert a sample to sds format",
+        "usage: midisds convert <input_file>"
     },
     {
         MIDISDS_COMMAND_INTERFACE_LIST,

@@ -9,7 +9,7 @@ rm = rm -f
 
 all: midisds
 
-midisds: midisds_command.c midisds_dump.c
+midisds: midisds_command.c midisds_dump.c midisds_convert.c
 	$(CC) $(CFLAGS) -o $@ midisds_main.c $^ $(LDLIBS)
 
 clean:

@@ -4,6 +4,7 @@
 #include "midisds.h"
 #include "midisds_command.h"
 #include "midisds_common.h"
+#include "midisds_convert.h"
 #include "midisds_dump.h"
 #include "midisds_receive.h"
 #include "midisds_send.h"
@@ -41,6 +42,14 @@ int main(int argc, char** argv) {
             exit_code = 1;
         } else {
             exit_code = midisds_dump(argv[2]);
+        }
+        break;
+    case MIDISDS_COMMAND_CONVERT:
+        if (argc < 3) {
+            midisds_help(MIDISDS_COMMAND_CONVERT);
+            exit_code = 1;
+        } else {
+            exit_code = midisds_convert_to_sds_temp(argv[2]);
         }
         break;
     default:
