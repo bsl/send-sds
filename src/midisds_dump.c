@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 #include <sndfile.h>
 
 #include "midisds_dump.h"
@@ -28,6 +32,28 @@ int midisds_dump(const char *filename) {
     printf("%-20s %s\n", "seekable", sfinfo.seekable ? "yes" : "no");
 
     sf_close(sndfile);
+
+    // display the sds dump header (if there is one)
+    if ((sfinfo.format & SF_FORMAT_TYPEMASK) == SF_FORMAT_SDS) {
+        int i;
+        unsigned char hdrbuf[MIDISDS_HEADER_LENGTH];
+        int fd = open(filename, O_RDONLY);
+        ssize_t hdr_bytes_read = read(fd, hdrbuf, \
+                                      (size_t) MIDISDS_HEADER_LENGTH);
+
+        if (hdr_bytes_read != MIDISDS_HEADER_LENGTH) {
+            fprintf(stderr, "Could not read %d bytes from %s\n", \
+                    MIDISDS_HEADER_LENGTH, filename);
+            return 4;
+        } else {
+            printf("%-20s", "Dump Header");
+            for (i = 0; i < MIDISDS_HEADER_LENGTH; i++) {
+                printf(" %X", (int) hdrbuf[i]);
+            }
+            printf("\n");
+        }
+    }
+
     return 0;
 }
 
