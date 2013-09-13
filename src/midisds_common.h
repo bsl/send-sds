@@ -22,19 +22,10 @@
 // =====
 
 // midi_sds_header
-typedef struct {
-    int sysex_channel;
-    short waveform;
-    short significant_bits;
-    int sample_period; // measured in ns
-} midi_sds_header;
+typedef unsigned char midi_sds_header[MIDISDS_HEADER_LENGTH];
 
 // midi_sds_packet
-typedef struct {
-    midi_sds_header hdr; // to get significant bits
-    unsigned char *buf;
-    size_t buf_size;
-} midi_sds_packet;
+typedef unsigned char midi_sds_packet[MIDISDS_PACKET_LENGTH];
 
 // midi_sds_message
 typedef struct {

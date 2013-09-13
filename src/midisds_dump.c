@@ -12,6 +12,10 @@
 
 int get_format_info(SF_INFO sf_info, char *buf);
 
+static const char *header_desc[MIDISDS_HEADER_LENGTH] = {
+    "", "", "cc", "", "sl", "sh", "ee", "pl", "pm", "ph",
+    "gl", "gm", "gh", "hl", "hm", "hh", "il", "im", "ih", "jj", ""
+};
 // returns an exit code
 int midisds_dump(const char *filename) {
     SF_INFO sfinfo;
@@ -48,7 +52,13 @@ int midisds_dump(const char *filename) {
         } else {
             printf("%-20s", "Dump Header");
             for (i = 0; i < MIDISDS_HEADER_LENGTH; i++) {
-                printf(" %X", (int) hdrbuf[i]);
+                printf(" %02X", (int) hdrbuf[i]);
+            }
+            printf("\n");
+
+            printf("%-20s","");
+            for (i = 0; i < MIDISDS_HEADER_LENGTH; i++) {
+                printf("%3s", header_desc[i]);
             }
             printf("\n");
         }
