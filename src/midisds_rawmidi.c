@@ -7,15 +7,13 @@
 
 #include "midisds_rawmidi.h"
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+// static int MIDISDS_IF_OPEN_FLAGS = SND_RAWMIDI_SYNC;
 
 struct midi {
     char *device;
     snd_rawmidi_t *handle_in;
     snd_rawmidi_t *handle_out;
 };
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int midi_open_interface(const char *device, midi_t *midi_r, err_t err) {
     int r;
@@ -73,4 +71,12 @@ int midi_read(midi_t midi, unsigned char *byte, err_t err) {
     }
 
     return 1;
+}
+
+/**
+ * Write <count> bytes from <buf> to a midi stream.
+ */
+int midi_write(midi_t midi, unsigned char *buf,
+               size_t count, err_t err) {
+    
 }

@@ -4,25 +4,19 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <sndfile.h>
+
 #include "err.h"
 #include "midisds_rawmidi.h"
-#include "midisds.h"
+#include "midisds_common.h"
 
-typedef enum {
-    STATE0,  /* seen [],             hoping for f0             */
-    STATE1,  /* seen [f0]            hoping for 7e             */
-    STATE2,  /* seen [f0,7e]         hoping for channel number */
-    STATE3,  /* seen [f0,7e,CN]      hoping for 7{c,d,e,f}     */
-    STATE4,  /* seen [f0,7e,CN,x]    hoping for packet number  */
-    STATE5,  /* seen [f0,7e,CN,x,PN] hoping for f7             */
-} response_state_t;
+int midisds_send_file(const char *filename, int *fd) {
+    SF_INFO sfinfo;
+    SNDFILE *sndfile;
 
-typedef enum {
-    RESPONSE_ACK,
-    RESPONSE_NAK,
-    RESPONSE_CANCEL,
-    RESPONSE_WAIT
-} response_t;
-
-int midisds_send(const char *filename, int *fd);
-
+    sndfile = sf_open(filename, SFM_READ, &sfinfo);
+    if ((sfinfo.format & SF_FORMAT_TYPEMASK) == SF_FORMAT_SDS) {
+    } else {
+        return 3;
+    }
+}
