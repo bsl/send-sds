@@ -1,6 +1,10 @@
 #ifndef MIDISDS_COMMON_H
 #define MIDISDS_COMMON_H
 
+#include <stdio.h>
+
+#include "midisds_err.h"
+
 // ====
 // defs
 // ====
@@ -21,36 +25,33 @@
 // types
 // =====
 
-// midi_sds_header
-typedef unsigned char midi_sds_header[MIDISDS_HEADER_LENGTH];
+// midisds_byte
+typedef unsigned char midisds_byte;
 
-// midi_sds_packet
-typedef unsigned char midi_sds_packet[MIDISDS_PACKET_LENGTH];
+// midisds_header
+typedef midisds_byte midisds_header[MIDISDS_HEADER_LENGTH];
 
-// midi_sds_message
+// midisds_packet
+typedef midisds_byte midisds_packet[MIDISDS_PACKET_LENGTH];
+
+// midisds_message
 typedef struct {
-    midi_sds_header hdr;
-    midi_sds_packet *pkts;
-    int num_packets;
-} midi_sds_message;
+    midisds_header *hdr;
+    midisds_packet *pkts;
+    unsigned int num_packets;
+} midisds_message;
 
 // =========
 // functions
 // =========
 
-// Returns
-int midisds_parse_header(const unsigned char *buf, size_t buf_size,
-                         midi_sds_header *hdr);
+void midisds_write_channel_number(midisds_header hdr, \
+                                  unsigned int channel_number);
 
-int midisds_parse_packet(const unsigned char *buf, size_t buf_size,
-                         midi_sds_packet *pkt);
+/* midisds_message midisds_read_file(const char *filename, int *fd_r); */
 
-/* Seems like these could just be private static functions */
-/* int midisds_get_file_size(int fd, size_t *size); */
-/* int midisds_file_size_is_ok(size_t size); */
-/* unsigned int midisds_calc_num_packets(size_t size); */
-/* int midisds_read_header(int fd, unsigned char *buf, size_t buf_size); */
-/* int midisds_display_header(unsigned char *buf); */
-/* int midisds_read_packet(int fd, unsigned char *buf, size_t buf_size); */
+size_t midisds_header_length(void);
+size_t midisds_packet_length(void);
+size_t midisds_audio_bytes_per_packet(void);
 
 #endif // MIDISDS_COMMON_H

@@ -25,6 +25,8 @@ int main(int argc, char** argv) {
     command = midisds_string_to_command(command_string);
 
     switch(command) {
+    case MIDISDS_COMMAND_SEND:
+        break;
     case MIDISDS_COMMAND_INTERFACE_LIST:
         exit_code = midisds_iflist();
         break;

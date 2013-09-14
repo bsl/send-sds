@@ -5,38 +5,37 @@
 
 #include <alsa/asoundlib.h>
 
+#include "midisds_common.h"
 #include "midisds_rawmidi.h"
 
-// static int MIDISDS_IF_OPEN_FLAGS = SND_RAWMIDI_SYNC;
-
-struct midi {
-    char *device;
-    snd_rawmidi_t *handle_in;
-    snd_rawmidi_t *handle_out;
-};
-
-int midi_open_interface(const char *device, midi_t *midi_r, err_t err) {
+midi_t midisds_open_interface(const char *device) {
     int r;
-    snd_rawmidi_t *handle_in, *handle_out;
+    midi_input *handle_in;
+    midi_output *handle_out;
     midi_t midi;
 
     r = snd_rawmidi_open(&handle_in, &handle_out, device, 0);
     if (r) {
-        err_set2(err, "snd_rawmidi_open \"%s\": error %d", device, r);
-        return 0;
+        // TODO: handle error
     }
 
-    midi             = malloc(sizeof(*midi));
-    midi->device     = strdup(device);
-    midi->handle_in  = handle_in;
-    midi->handle_out = handle_out;
+    // will need to call free in midi_close_interface
+    midi.device = strdup(device);
+    midi.handle_in = handle_in;
+    midi.handle_out = handle_out;
 
-    *midi_r = midi;
-
-    return 1;
+    return midi;
 }
 
-void midi_close_interface(midi_t midi) {
+midi_input *midisds_get_input(const midi_t *midi) {
+    return midi->handle_in;
+}
+
+midi_output *midisds_get_output(const midi_t *midi) {
+    return midi->handle_out;
+}
+
+void midisds_close_interface(midi_t *midi) {
     if (midi == NULL) {
         return;
     }
@@ -47,36 +46,11 @@ void midi_close_interface(midi_t midi) {
     free(midi);
 }
 
-int midi_send(midi_t midi, const unsigned char *data,
-              size_t data_length, err_t err) {
-    ssize_t r;
-
-    r = snd_rawmidi_write(midi->handle_out, data, data_length);
-    if ((size_t)r != data_length) {
-        err_set2(err, "snd_rawmidi_write: tried to write %d bytes, wrote %d",
-                 data_length, r);
-        return 0;
-    }
-
-    return 1;
+ssize_t midisds_send(const midi_t *midi, midisds_byte *data, size_t sz) {
+    return snd_rawmidi_write(midi->handle_out, data, sz);
 }
 
-int midi_read(midi_t midi, unsigned char *byte, err_t err) {
-    ssize_t r;
-
-    r = snd_rawmidi_read(midi->handle_in, byte, 1);
-    if ((size_t)r != 1) {
-        err_set2(err, "snd_rawmidi_read: tried to read 1 byte, read %d", r);
-        return 0;
-    }
-
-    return 1;
+ssize_t midisds_read(const midi_t *midi, midisds_byte *buf, size_t sz) {
+    return snd_rawmidi_read(midi->handle_in, buf, sz);
 }
 
-/**
- * Write <count> bytes from <buf> to a midi stream.
- */
-int midi_write(midi_t midi, unsigned char *buf,
-               size_t count, err_t err) {
-    
-}

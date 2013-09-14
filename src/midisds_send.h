@@ -1,6 +1,9 @@
 #ifndef MIDISDS_SEND_H
 #define MIDISDS_SEND_H
 
+#include "midisds_common.h"
+#include "midisds_rawmidi.h"
+
 typedef enum {
     STATE0,  /* seen [],             hoping for f0             */
     STATE1,  /* seen [f0]            hoping for 7e             */
@@ -17,6 +20,7 @@ typedef enum {
     RESPONSE_WAIT
 } response_t;
 
-int midisds_send(const char *filename, int *fd);
+int midisds_send_msg(const midi_t *midi, const midisds_message *msg);
+int midisds_send_header(const midi_t *midi, midisds_header *hdr);
 
 #endif

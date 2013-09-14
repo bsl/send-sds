@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "err.h"
+#include "midisds_err.h"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
