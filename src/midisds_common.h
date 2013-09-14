@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "midisds_err.h"
+#include "midisds_log.h"
 
 // ====
 // defs

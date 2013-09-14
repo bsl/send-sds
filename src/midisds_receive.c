@@ -3,7 +3,7 @@
 
 #include "midisds.h"
 #include "midisds_common.h"
-#include "midisds_err.h"
+#include "midisds_log.h"
 #include "midisds_rawmidi.h"
 
 midisds_message midisds_receive(const midi_t *midi) {
@@ -16,6 +16,7 @@ midisds_message midisds_receive(const midi_t *midi) {
     unsigned int num_packets = 0;
     midisds_message msg;
 
+    // Receive Dump Header
     while (hdr_read_count < hdr_len) {
         hdr_bytes_read = midisds_read(midi, (midisds_byte *) hdr, hdr_read_sz);
         hdr_read_count += hdr_bytes_read;
