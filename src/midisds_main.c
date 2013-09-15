@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "midisds.h"
+#include "midisds_cli.h"
 #include "midisds_command.h"
 #include "midisds_common.h"
 #include "midisds_convert.h"

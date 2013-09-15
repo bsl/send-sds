@@ -45,7 +45,4 @@ ssize_t midisds_send_file(midisds_send_file_options_t *options);
 
 void midisds_inspect_send_file_options(midisds_send_file_options_t opts);
 
-midisds_send_file_options_t \
-midisds_parse_send_file_options(int argc, char **argv);
-
 #endif
