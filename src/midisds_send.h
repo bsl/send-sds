@@ -30,7 +30,7 @@ typedef struct {
 } midisds_send_file_options_t;
 
 typedef struct {
-    char *device;
+    char device[10];
     midisds_message_t *msg;
     unsigned int sysex_channel;
     unsigned int waveform_number;
@@ -41,7 +41,7 @@ ssize_t midisds_send_msg(const midi_t *midi, \
 
 ssize_t midisds_send_header(const midi_t *midi, midisds_header_t *hdr);
 
-ssize_t midisds_send_sds_file(midisds_send_file_options_t *options);
+ssize_t midisds_send_file(midisds_send_file_options_t *options);
 
 void midisds_inspect_send_file_options(midisds_send_file_options_t opts);
 

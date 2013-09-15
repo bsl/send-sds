@@ -27,7 +27,9 @@ MIDISDS_COMMAND_INFO MIDISDS_COMMAND_INFO_ARR[MIDISDS_NUM_COMMANDS] = {
         "Receive a sample from a device",
         "usage: midisds receive [options] <output_file>\n\n"
         "options:\n"
-        "  -p    ALSA midi port (get with midisds iflist)"
+        "  -d    ALSA midi device (get with midisds iflist)\n"
+        "  -c    sysex channel to receive on\n"
+        "  -s    sample number to receive"
     },
     {
         MIDISDS_COMMAND_DUMP,

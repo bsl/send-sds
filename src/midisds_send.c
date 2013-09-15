@@ -10,14 +10,15 @@
 #include <sndfile.h>
 
 #include "midisds_common.h"
+#include "midisds_convert.h"
 #include "midisds_log.h"
 #include "midisds_rawmidi.h"
 #include "midisds_send.h"
+#include "midisds_sndfile.h"
 
 static midisds_message_t get_message_from_file(char *filename);
 static int get_header_from_file(int fd, midisds_header_t hdr);
 static ssize_t get_packets_from_file(int fd, midisds_message_t msg);
-
 
 // Send an sds message to a device
 ssize_t midisds_send_msg(const midi_t *midi, \
@@ -49,23 +50,36 @@ ssize_t midisds_send_header(const midi_t *midi, midisds_header_t *hdr) {
 }
 
 // Send an sds file to a device
-ssize_t midisds_send_sds_file(midisds_send_file_options_t *options) {
+ssize_t midisds_send_file(midisds_send_file_options_t *options) {
+    ssize_t bytes_sent;
     midi_t midi = midisds_open_interface(options->device);
-    midisds_message_t msg = get_message_from_file(options->filename);
+    midisds_message_t msg;
     midisds_send_message_options_t msgopts;
+    midisds_sndfile_t sf = midisds_sndfile_open(options->filename,
+                                                MIDISDS_SF_READ);
 
-    msgopts.msg = &msg;
-    msgopts.sysex_channel = options->sysex_channel;
-    msgopts.waveform_number = options->waveform_number;
-    ssize_t bytes_sent = midisds_send_msg(&midi, &msgopts);
+    // We have an sds file -- no conversion necessary
+    if (midisds_sf_is_sds(&sf)) {
+        msg = get_message_from_file(options->filename);
+        msgopts.msg = &msg;
+        msgopts.sysex_channel = options->sysex_channel;
+        msgopts.waveform_number = options->waveform_number;
+        bytes_sent = midisds_send_msg(&midi, &msgopts);
+        midisds_close_interface(&midi);
+    } else { // convert to sds, then send
+        char tmpfilename[100];
+        tmpfilename[0] = '\0';
+        // TODO: error handling
+        midisds_convert_to_sds_temp(options->filename, tmpfilename);
+        strcpy(options->filename, tmpfilename);
+        return midisds_send_file(options);
+    }
+
     return bytes_sent;
 }
 
 midisds_send_file_options_t \
 midisds_parse_send_file_options(int argc, char **argv) {
-    /* extern char *optarg; */
-    /* extern int optind, opterr, optopt; */
-
     midisds_send_file_options_t opts;
     opts.sysex_channel = 0;
     opts.waveform_number = 1;

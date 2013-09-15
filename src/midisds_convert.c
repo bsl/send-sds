@@ -8,7 +8,7 @@
 
 static SF_INFO make_sds_info(SF_INFO input);
 
-int midisds_convert_to_sds_temp(const char *filename) {
+int midisds_convert_to_sds_temp(const char *filename, char *tmpfilename) {
     SF_INFO sfinfo;
     SNDFILE *sndfile;
 
@@ -24,7 +24,9 @@ int midisds_convert_to_sds_temp(const char *filename) {
     char tmpnm[100];
     tmpnam(tmpnm);
     strcat(tmpnm, ".sds");
-    printf("output file -> %s\n", tmpnm);
+    if (tmpfilename != NULL) {
+        strcpy(tmpfilename, tmpnm);
+    }
 
     SNDFILE *tmpsndfile;
     SF_INFO wrinfo = make_sds_info(sfinfo);

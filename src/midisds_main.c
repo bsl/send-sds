@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
             midisds_help(MIDISDS_COMMAND_CONVERT);
             exit_code = 1;
         } else {
-            exit_code = midisds_convert_to_sds_temp(argv[2]);
+            exit_code = midisds_convert_to_sds_temp(argv[2], NULL);
         }
         break;
     default:
