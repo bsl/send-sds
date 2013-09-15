@@ -51,11 +51,12 @@ ssize_t midisds_header_length(void);
 ssize_t midisds_packet_length(void);
 ssize_t midisds_audio_bytes_per_packet(void);
 
+// midisds_header_t *midisds_get_header(midisds_send_message_options_t *opts);
 midisds_header_t *midisds_get_header(midisds_message_t *msg);
 
 void midisds_copy_header(midisds_header_t dest, midisds_header_t src);
 
-void midisds_write_channel_number(midisds_header_t hdr, \
+void midisds_write_channel_number(midisds_header_t hdr,
                                   unsigned int channel_number);
 
 unsigned int midisds_strtoui(char *s);

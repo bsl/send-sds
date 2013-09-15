@@ -1,12 +1,14 @@
 #include "midisds_send.h"
 #include "midisds_cli.h"
 
-midisds_send_file_options_t \
+midisds_send_file_options_t
 midisds_parse_send_file_options(int argc, char **argv) {
+    int opt;
     midisds_send_file_options_t opts;
+
+    // defaults
     opts.sysex_channel = 0;
     opts.waveform_number = 1;
-    int opt;
 
     while ((opt = getopt(argc, argv, "c:s:f:d:")) != -1) {
         switch (opt) {
@@ -19,7 +21,7 @@ midisds_parse_send_file_options(int argc, char **argv) {
         case 'f': // filename
             strcpy(opts.filename, optarg);
             break;
-        case 'd':
+        case 'd': // alsa device
             strcpy(opts.device, optarg);
             break;
         }

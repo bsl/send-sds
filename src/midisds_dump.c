@@ -9,6 +9,7 @@
 
 #include "midisds_common.h"
 #include "midisds_dump.h"
+#include "midisds_log.h"
 #include "midisds_sndfile.h"
 
 static const char *header_desc[MIDISDS_HEADER_LENGTH] = {
@@ -18,6 +19,7 @@ static const char *header_desc[MIDISDS_HEADER_LENGTH] = {
 // returns an exit code
 int midisds_dump(const char *filename) {
     midisds_sndfile_t sf;
+    midisds_log_info("dumping %s\n", filename);
     sf = midisds_sndfile_open(filename, MIDISDS_SF_READ);
 
     printf("%-20s %s\n", "filename", filename);

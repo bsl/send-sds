@@ -3,10 +3,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <unistd.h>
 
 #include "midisds.h"
 #include "midisds_cli.h"
+#include "midisds_conf.h"
 #include "midisds_command.h"
 #include "midisds_common.h"
 #include "midisds_convert.h"
@@ -17,6 +19,8 @@
 void print_usage(void);
 
 int main(int argc, char** argv) {
+    const char *conf_file = "/etc/midisds.conf";
+
     char *command_string;
     MIDISDS_COMMAND command = MIDISDS_COMMAND_UNKNOWN;
     midisds_send_file_options_t send_file_opts;
@@ -27,13 +31,34 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    if (midisds_read_conf_file(conf_file) == 0) {
+        midisds_log_error("could not read %s", conf_file);
+    } else {
+        char *log_level = midisds_get_conf_for("log_level");
+        if (strcasecmp(log_level, "error") == 0) {
+            midisds_set_log_level(midisds_log_level_error);
+        } else if (strcasecmp(log_level, "warn") == 0) {
+            midisds_set_log_level(midisds_log_level_warn);
+        } else if (strcasecmp(log_level, "info") == 0) {
+            midisds_set_log_level(midisds_log_level_info);
+        } else if (strcasecmp(log_level, "debug") == 0) {
+            midisds_set_log_level(midisds_log_level_debug);
+        } else if (strcasecmp(log_level, "trace") == 0) {
+            midisds_set_log_level(midisds_log_level_trace);
+        } else {
+            fprintf(stderr, "Unrecognized log_level '%s'\n", log_level);
+            exit(5);
+        }
+    }
+
     command_string = argv[1];
     command = midisds_string_to_command(command_string);
 
     switch(command) {
     case MIDISDS_COMMAND_SEND:
         send_file_opts = midisds_parse_send_file_options(argc, argv);
-        midisds_inspect_send_file_options(send_file_opts);
+        // TODO: error handling
+        midisds_send_file(&send_file_opts);
         break;
     case MIDISDS_COMMAND_INTERFACE_LIST:
         exit_code = midisds_iflist();

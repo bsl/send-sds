@@ -12,6 +12,7 @@ all: midisds
 
 midisds: midisds_common.c \
 		 midisds_cli.c \
+		 midisds_conf.c \
 	     midisds_log.c \
 	     midisds_dump.c \
          midisds_convert.c \

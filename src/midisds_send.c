@@ -21,7 +21,8 @@ static int get_header_from_file(int fd, midisds_header_t hdr);
 static ssize_t get_packets_from_file(int fd, midisds_message_t msg);
 
 // Send an sds message to a device
-ssize_t midisds_send_msg(const midi_t *midi, \
+// TODO: send something other than the header
+ssize_t midisds_send_msg(const midi_t *midi,
                          midisds_send_message_options_t *options) {
     midisds_message_t *msg = options->msg;
     midisds_header_t *hdr = midisds_get_header(msg);
@@ -32,7 +33,10 @@ ssize_t midisds_send_msg(const midi_t *midi, \
 // returns bytes sent
 ssize_t midisds_send_header(const midi_t *midi, midisds_header_t *hdr) {
     ssize_t hdr_len = midisds_header_length();
-    ssize_t bytes_sent = midisds_send(midi, *hdr, hdr_len);
+    ssize_t bytes_sent = 0;
+
+    // write sysex_channel and waveform_number into the header
+    bytes_sent = midisds_send(midi, *hdr, hdr_len);
 
     if (hdr_len != bytes_sent) {
         char msgbuf[200];

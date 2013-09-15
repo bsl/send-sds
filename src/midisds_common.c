@@ -28,6 +28,10 @@
 
 /* static const char * response_to_string(response_t response); */
 
+static void midisds_format_header(midisds_header_t hdr,
+                                  unsigned int sysex_channel,
+                                  unsigned int waveform_number);
+
 // =========
 // functions
 // =========
@@ -44,7 +48,10 @@ ssize_t midisds_audio_bytes_per_packet(void) {
     return (size_t) MIDISDS_AUDIO_BYTES_PER_PACKET;
 }
 
+// midisds_header_t *midisds_get_header(midisds_send_message_options_t *opts) {
 midisds_header_t *midisds_get_header(midisds_message_t *msg) {
+    // write sysex_channel and waveform_number into the header
+    // before returning
     return &msg->hdr;
 }
 
@@ -57,7 +64,7 @@ void midisds_copy_header(midisds_header_t dest, midisds_header_t src) {
 }
 
 // Write the sysex channel number to midisds_header
-void midisds_write_channel_number(midisds_header_t hdr, \
+void midisds_write_channel_number(midisds_header_t hdr,
                                   unsigned int channel_number) {
     hdr[2] = (unsigned char) channel_number;
 }
@@ -106,6 +113,16 @@ unsigned int midisds_strtoui(char *s) {
 // ========================
 // Private static functions
 // ========================
+
+static void midisds_format_header(midisds_header_t hdr,
+                                  unsigned int sysex_channel,
+                                  unsigned int waveform_number) {
+    hdr[2] = (midisds_byte_t) sysex_channel;
+    hdr[4] = (midisds_byte_t) waveform_number;
+    // TODO: support waveforms > 64
+    // MD only goes up to 48 [bps]
+    // hdr[5] = (midisds_byte) waveform_number >> 7;
+}
 
 /* static int convert_channel_num(char *s, unsigned int *channel_num, err_t err) { */
 /*     unsigned int ui; */
