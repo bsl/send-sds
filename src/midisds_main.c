@@ -1,5 +1,9 @@
+// midisds_main.c
+// Brian Sorahan
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "midisds.h"
 #include "midisds_command.h"
@@ -14,6 +18,7 @@ void print_usage(void);
 int main(int argc, char** argv) {
     char *command_string;
     MIDISDS_COMMAND command = MIDISDS_COMMAND_UNKNOWN;
+    midisds_send_file_options_t send_file_opts;
     int exit_code = 0;
 
     if (argc < 2) {
@@ -26,6 +31,8 @@ int main(int argc, char** argv) {
 
     switch(command) {
     case MIDISDS_COMMAND_SEND:
+        send_file_opts = midisds_parse_send_file_options(argc, argv);
+        midisds_inspect_send_file_options(send_file_opts);
         break;
     case MIDISDS_COMMAND_INTERFACE_LIST:
         exit_code = midisds_iflist();

@@ -4,6 +4,6 @@
 #include "midisds_common.h"
 #include "midisds_rawmidi.h"
 
-midisds_message midisds_receive(const midi_t *midi);
+midisds_message_t midisds_receive(const midi_t *midi);
 
 #endif

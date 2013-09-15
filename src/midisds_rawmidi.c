@@ -10,13 +10,16 @@
 
 midi_t midisds_open_interface(const char *device) {
     int r;
-    midi_input *handle_in;
-    midi_output *handle_out;
+    midi_input_t *handle_in;
+    midi_output_t *handle_out;
     midi_t midi;
 
     r = snd_rawmidi_open(&handle_in, &handle_out, device, 0);
     if (r) {
-        // TODO: handle error
+        char errmsg[100];
+        errmsg[0] = '\0';
+        sprintf(errmsg, "snd_rawmidi_open: error %d", r);
+        midisds_log_error(errmsg);
     }
 
     // will need to call free in midi_close_interface
@@ -27,11 +30,11 @@ midi_t midisds_open_interface(const char *device) {
     return midi;
 }
 
-midi_input *midisds_get_input(const midi_t *midi) {
+midi_input_t *midisds_get_input(const midi_t *midi) {
     return midi->handle_in;
 }
 
-midi_output *midisds_get_output(const midi_t *midi) {
+midi_output_t *midisds_get_output(const midi_t *midi) {
     return midi->handle_out;
 }
 
@@ -46,11 +49,11 @@ void midisds_close_interface(midi_t *midi) {
     free(midi);
 }
 
-ssize_t midisds_send(const midi_t *midi, midisds_byte *data, size_t sz) {
+ssize_t midisds_send(const midi_t *midi, midisds_byte_t *data, size_t sz) {
     return snd_rawmidi_write(midi->handle_out, data, sz);
 }
 
-ssize_t midisds_read(const midi_t *midi, midisds_byte *buf, size_t sz) {
+ssize_t midisds_read(const midi_t *midi, midisds_byte_t *buf, size_t sz) {
     return snd_rawmidi_read(midi->handle_in, buf, sz);
 }
 

@@ -14,9 +14,12 @@ MIDISDS_COMMAND_INFO MIDISDS_COMMAND_INFO_ARR[MIDISDS_NUM_COMMANDS] = {
         MIDISDS_COMMAND_SEND,
         "send",
         "Send a sample to a device",
-        "usage: midisds send [options] <audio_sample>\n\n"
+        "usage: midisds send [options]\n\n"
         "options:\n"
-        "  -p    ALSA midi port (get with midisds iflist)"
+        "  -d    ALSA midi device (get with midisds iflist)\n"
+        "  -f    audio sample to send\n"
+        "  -c    sysex channel to send on\n"
+        "  -s    sample number to send to"
     },
     {
         MIDISDS_COMMAND_RECEIVE,

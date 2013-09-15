@@ -26,32 +26,38 @@
 // =====
 
 // midisds_byte
-typedef unsigned char midisds_byte;
+typedef unsigned char midisds_byte_t;
 
 // midisds_header
-typedef midisds_byte midisds_header[MIDISDS_HEADER_LENGTH];
+typedef midisds_byte_t midisds_header_t[MIDISDS_HEADER_LENGTH];
 
 // midisds_packet
-typedef midisds_byte midisds_packet[MIDISDS_PACKET_LENGTH];
+typedef midisds_byte_t midisds_packet_t[MIDISDS_PACKET_LENGTH];
 
 // midisds_message
 typedef struct {
-    midisds_header *hdr;
-    midisds_packet *pkts;
-    unsigned int num_packets;
-} midisds_message;
+    midisds_header_t hdr;
+    midisds_packet_t *pkts;
+    ssize_t num_packets;
+} midisds_message_t;
 
 // =========
 // functions
 // =========
 
-void midisds_write_channel_number(midisds_header hdr, \
-                                  unsigned int channel_number);
-
 /* midisds_message midisds_read_file(const char *filename, int *fd_r); */
 
-size_t midisds_header_length(void);
-size_t midisds_packet_length(void);
-size_t midisds_audio_bytes_per_packet(void);
+ssize_t midisds_header_length(void);
+ssize_t midisds_packet_length(void);
+ssize_t midisds_audio_bytes_per_packet(void);
+
+midisds_header_t *midisds_get_header(midisds_message_t *msg);
+
+void midisds_copy_header(midisds_header_t dest, midisds_header_t src);
+
+void midisds_write_channel_number(midisds_header_t hdr, \
+                                  unsigned int channel_number);
+
+unsigned int midisds_strtoui(char *s);
 
 #endif // MIDISDS_COMMON_H

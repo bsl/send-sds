@@ -12,10 +12,10 @@ typedef enum {
 } midisds_log_level;
 
 void midisds_set_log_level(midisds_log_level level);
-void midisds_log_error(char *str);
-void midisds_log_warn(char *str);
-void midisds_log_info(char *str);
-void midisds_log_debug(char *str);
-void midisds_log_trace(char *str);
+void midisds_log_error(const char *str);
+void midisds_log_warn(const char *str);
+void midisds_log_info(const char *str);
+void midisds_log_debug(const char *str);
+void midisds_log_trace(const char *str);
 
 #endif

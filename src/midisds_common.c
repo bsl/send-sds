@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "midisds_common.h"
 #include "midisds_send.h"
@@ -16,8 +18,6 @@
 
 /* static unsigned int midisds_calc_num_packets(size_t size); */
 
-/* static int convert_string_to_unsigned_int(char *s, unsigned int *ui); */
-
 /* static int send_file(int fd, size_t file_size, midi_t midi, */
 /*                      unsigned int channel_num, unsigned int sample_num, */
 /*                      err_t err); */
@@ -32,22 +32,38 @@
 // functions
 // =========
 
-size_t midisds_header_length(void) {
+ssize_t midisds_header_length(void) {
     return (size_t) MIDISDS_HEADER_LENGTH;
 }
 
-size_t midisds_packet_length(void) {
+ssize_t midisds_packet_length(void) {
     return (size_t) MIDISDS_PACKET_LENGTH;
 }
 
-size_t midisds_audio_bytes_per_packet(void) {
+ssize_t midisds_audio_bytes_per_packet(void) {
     return (size_t) MIDISDS_AUDIO_BYTES_PER_PACKET;
 }
 
+midisds_header_t *midisds_get_header(midisds_message_t *msg) {
+    return &msg->hdr;
+}
+
+void midisds_copy_header(midisds_header_t dest, midisds_header_t src) {
+    ssize_t i;
+    ssize_t hdr_len = midisds_header_length();
+    for(i = 0; i < hdr_len; i++) {
+        dest[i] = src[i];
+    }
+}
+
 // Write the sysex channel number to midisds_header
-void midisds_write_channel_number(midisds_header hdr, \
+void midisds_write_channel_number(midisds_header_t hdr, \
                                   unsigned int channel_number) {
     hdr[2] = (unsigned char) channel_number;
+}
+
+unsigned int midisds_strtoui(char *s) {
+    return strtoul(s, NULL, 0);
 }
 
 /* midisds_message midisds_read_file(const char *filename, int *fd_r) { */
@@ -117,21 +133,6 @@ void midisds_write_channel_number(midisds_header hdr, \
 /*     } else { */
 /*         return ui; */
 /*     } */
-/* } */
-
-/* static int convert_string_to_unsigned_int(char *s, unsigned int *ui) { */
-/*     char *endptr; */
-/*     unsigned int c; */
-
-/*     errno = 0; */
-/*     c = strtoul(s, &endptr, 0); */
-
-/*     if (errno != 0 || *s == '\0' || *endptr != '\0') { */
-/*         return 0; */
-/*     } */
-
-/*     *ui = c; */
-/*     return 1; */
 /* } */
 
 /*

@@ -6,20 +6,20 @@
 
 #include "midisds_common.h"
 
-typedef snd_rawmidi_t midi_input;
-typedef snd_rawmidi_t midi_output;
+typedef snd_rawmidi_t midi_input_t;
+typedef snd_rawmidi_t midi_output_t;
 
 typedef struct midi {
     char *device;
-    midi_input *handle_in;
-    midi_output *handle_out;
+    midi_input_t *handle_in;
+    midi_output_t *handle_out;
 } midi_t;
 
 midi_t midisds_open_interface(const char *device);
-midi_input *midisds_get_input(const midi_t *);
-midi_output *midisds_get_output(const midi_t *);
+midi_input_t *midisds_get_input(const midi_t *);
+midi_output_t *midisds_get_output(const midi_t *);
 void midisds_close_interface(midi_t *midi);
-ssize_t midisds_send(const midi_t *midi, midisds_byte *data, size_t sz);
-ssize_t midisds_read(const midi_t *midi, midisds_byte *buf, size_t sz);
+ssize_t midisds_send(const midi_t *midi, midisds_byte_t *data, size_t sz);
+ssize_t midisds_read(const midi_t *midi, midisds_byte_t *buf, size_t sz);
 
 #endif

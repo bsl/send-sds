@@ -33,8 +33,6 @@ int midisds_dump(const char *filename) {
     printf("%-20s %d\n", "sections", sf.info->sections);
     printf("%-20s %s\n", "seekable", sf.info->seekable ? "yes" : "no");
 
-    midisds_sndfile_close(&sf);
-
     // display the sds dump header (if there is one)
     if (midisds_sf_is_sds(&sf)) {
         int i;
@@ -61,6 +59,8 @@ int midisds_dump(const char *filename) {
             printf("\n");
         }
     }
+
+    midisds_sndfile_close(&sf);
 
     return 0;
 }
