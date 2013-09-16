@@ -1,16 +1,20 @@
 rm = rm -rf
-directories := bin lib
-binaries := midisds
-binaries := $(addprefix "src/", $(binaries))
 
-.PHONY: clean all bin lib
+ifeq ($(DESTDIR),)
+	DESTDIR=/usr/local/
+endif
 
-all: dirs
-	$(MAKE) -C src && mv $(binaries) bin
+.PHONY: clean all bin lib install
 
-dirs:
-	mkdir $(directories)
+all: midisds
+
+midisds:
+	$(MAKE) -C src && mv src/midisds bin
 
 clean:
-	-$(rm) $(directories)
 	$(MAKE) -C src clean
+	-$(rm) bin/midisds
+
+install:
+	cp bin/midisds $(DESTDIR)bin
+	cp -R conf/midisds $(DESTDIR)etc

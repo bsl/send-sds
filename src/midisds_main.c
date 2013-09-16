@@ -35,20 +35,7 @@ int main(int argc, char** argv) {
         midisds_log_error("could not read %s", conf_file);
     } else {
         char *log_level = midisds_get_conf_for("log_level");
-        if (strcasecmp(log_level, "error") == 0) {
-            midisds_set_log_level(midisds_log_level_error);
-        } else if (strcasecmp(log_level, "warn") == 0) {
-            midisds_set_log_level(midisds_log_level_warn);
-        } else if (strcasecmp(log_level, "info") == 0) {
-            midisds_set_log_level(midisds_log_level_info);
-        } else if (strcasecmp(log_level, "debug") == 0) {
-            midisds_set_log_level(midisds_log_level_debug);
-        } else if (strcasecmp(log_level, "trace") == 0) {
-            midisds_set_log_level(midisds_log_level_trace);
-        } else {
-            fprintf(stderr, "Unrecognized log_level '%s'\n", log_level);
-            exit(5);
-        }
+        midisds_set_log_level_str(log_level);
     }
 
     command_string = argv[1];
