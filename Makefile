@@ -1,20 +1,22 @@
 rm = rm -rf
+midisd_src=src/midisd
+midisd_bin=bin/midisd
 
 ifeq ($(DESTDIR),)
 	DESTDIR=/usr/local/
 endif
 
-.PHONY: clean all bin lib install
+.PHONY: clean all midisd install
 
-all: midisds
+all: midisd
 
-midisds:
-	$(MAKE) -C src && mv src/midisds bin
+midisd:
+	$(MAKE) -C src && mv $(midisd_src) bin
 
 clean:
 	$(MAKE) -C src clean
-	-$(rm) bin/midisds
+	-$(rm) $(midisd_bin)
 
 install:
-	cp bin/midisds $(DESTDIR)bin
-	cp -R conf/midisds $(DESTDIR)etc
+	cp $(midisd_bin) $(DESTDIR)bin
+	cp -R conf/midisd $(DESTDIR)etc

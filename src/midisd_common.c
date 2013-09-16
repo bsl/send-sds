@@ -2,21 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "midisds_common.h"
-#include "midisds_send.h"
+#include "midisd_common.h"
+#include "midisd_send.h"
 
 // ==========
 // prototypes
 // ==========
 
-/* static int __midisds_read(int fd, size_t length, midisds_byte *buf, \ */
+/* static int __midisd_read(int fd, size_t length, midisd_byte *buf, \ */
 /*                           size_t buf_size); */
 
 /* static int convert_channel_num(char *s, unsigned int *channel_num, err_t err); */
 
 /* static int get_sample_num(unsigned char sl, unsigned char sh); */
 
-/* static unsigned int midisds_calc_num_packets(size_t size); */
+/* static unsigned int midisd_calc_num_packets(size_t size); */
 
 /* static int send_file(int fd, size_t file_size, midi_t midi, */
 /*                      unsigned int channel_num, unsigned int sample_num, */
@@ -28,7 +28,7 @@
 
 /* static const char * response_to_string(response_t response); */
 
-static void midisds_format_header(midisds_header_t hdr,
+static void midisd_format_header(midisd_header_t hdr,
                                   unsigned int sysex_channel,
                                   unsigned int waveform_number);
 
@@ -36,44 +36,44 @@ static void midisds_format_header(midisds_header_t hdr,
 // functions
 // =========
 
-ssize_t midisds_header_length(void) {
-    return (size_t) MIDISDS_HEADER_LENGTH;
+ssize_t midisd_header_length(void) {
+    return (size_t) MIDISD_HEADER_LENGTH;
 }
 
-ssize_t midisds_packet_length(void) {
-    return (size_t) MIDISDS_PACKET_LENGTH;
+ssize_t midisd_packet_length(void) {
+    return (size_t) MIDISD_PACKET_LENGTH;
 }
 
-ssize_t midisds_audio_bytes_per_packet(void) {
-    return (size_t) MIDISDS_AUDIO_BYTES_PER_PACKET;
+ssize_t midisd_audio_bytes_per_packet(void) {
+    return (size_t) MIDISD_AUDIO_BYTES_PER_PACKET;
 }
 
-// midisds_header_t *midisds_get_header(midisds_send_message_options_t *opts) {
-midisds_header_t *midisds_get_header(midisds_message_t *msg) {
+// midisd_header_t *midisd_get_header(midisd_send_message_options_t *opts) {
+midisd_header_t *midisd_get_header(midisd_message_t *msg) {
     // write sysex_channel and waveform_number into the header
     // before returning
     return &msg->hdr;
 }
 
-void midisds_copy_header(midisds_header_t dest, midisds_header_t src) {
+void midisd_copy_header(midisd_header_t dest, midisd_header_t src) {
     ssize_t i;
-    ssize_t hdr_len = midisds_header_length();
+    ssize_t hdr_len = midisd_header_length();
     for(i = 0; i < hdr_len; i++) {
         dest[i] = src[i];
     }
 }
 
-// Write the sysex channel number to midisds_header
-void midisds_write_channel_number(midisds_header_t hdr,
+// Write the sysex channel number to midisd_header
+void midisd_write_channel_number(midisd_header_t hdr,
                                   unsigned int channel_number) {
     hdr[2] = (unsigned char) channel_number;
 }
 
-unsigned int midisds_strtoui(char *s) {
+unsigned int midisd_strtoui(char *s) {
     return strtoul(s, NULL, 0);
 }
 
-/* midisds_message midisds_read_file(const char *filename, int *fd_r) { */
+/* midisd_message midisd_read_file(const char *filename, int *fd_r) { */
 /*     int fd; */
 /*     fd = open(filename, O_RDONLY); */
 
@@ -85,43 +85,43 @@ unsigned int midisds_strtoui(char *s) {
 /*     return NULL; */
 /* } */
 
-/* assumes midisds_file_size_is_ok(size, ...) */
-/* static unsigned int midisds_calc_num_packets(size_t size) { */
-/*     return (size - MIDISDS_HEADER_LENGTH) / MIDISDS_PACKET_LENGTH; */
+/* assumes midisd_file_size_is_ok(size, ...) */
+/* static unsigned int midisd_calc_num_packets(size_t size) { */
+/*     return (size - MIDISD_HEADER_LENGTH) / MIDISD_PACKET_LENGTH; */
 /* } */
 
-/* int midisds_read_header(int fd, unsigned char *buf, size_t buf_size) { */
-/*     return __midisds_read(fd, MIDISDS_HEADER_LENGTH, buf, buf_size); */
+/* int midisd_read_header(int fd, unsigned char *buf, size_t buf_size) { */
+/*     return __midisd_read(fd, MIDISD_HEADER_LENGTH, buf, buf_size); */
 /* } */
 
-/* assumes midisds_read_header has already read data into buf */
-/* int midisds_display_header(unsigned char* buf) { */
+/* assumes midisd_read_header has already read data into buf */
+/* int midisd_display_header(unsigned char* buf) { */
 /*     int i; */
 
-/*     printf("MIDISDS HEADER: "); */
-/*     for (i = 0; i < MIDISDS_HEADER_LENGTH; i++) { */
+/*     printf("MIDISD HEADER: "); */
+/*     for (i = 0; i < MIDISD_HEADER_LENGTH; i++) { */
 /*         printf("%X ", buf[i]); */
 /*     } */
 /*     printf("\n"); */
 /*     return 1; */
 /* } */
 
-/* int midisds_read_packet(int fd, unsigned char *buf, size_t buf_size) { */
-/*     return __midisds_read(fd, MIDISDS_PACKET_LENGTH, buf, buf_size); */
+/* int midisd_read_packet(int fd, unsigned char *buf, size_t buf_size) { */
+/*     return __midisd_read(fd, MIDISD_PACKET_LENGTH, buf, buf_size); */
 /* } */
 
 // ========================
 // Private static functions
 // ========================
 
-static void midisds_format_header(midisds_header_t hdr,
+static void midisd_format_header(midisd_header_t hdr,
                                   unsigned int sysex_channel,
                                   unsigned int waveform_number) {
-    hdr[2] = (midisds_byte_t) sysex_channel;
-    hdr[4] = (midisds_byte_t) waveform_number;
+    hdr[2] = (midisd_byte_t) sysex_channel;
+    hdr[4] = (midisd_byte_t) waveform_number;
     // TODO: support waveforms > 64
     // MD only goes up to 48 [bps]
-    // hdr[5] = (midisds_byte) waveform_number >> 7;
+    // hdr[5] = (midisd_byte) waveform_number >> 7;
 }
 
 /* static int convert_channel_num(char *s, unsigned int *channel_num, err_t err) { */
@@ -158,14 +158,14 @@ static void midisds_format_header(midisds_header_t hdr,
 /* static int send_file(int fd, size_t file_size, midi_t midi, */
 /*                      unsigned int channel_num, unsigned int sample_num, */
 /*                      err_t err) { */
-/*     unsigned char buf[max(MIDISDS_HEADER_LENGTH, MIDISDS_PACKET_LENGTH)]; */
+/*     unsigned char buf[max(MIDISD_HEADER_LENGTH, MIDISD_PACKET_LENGTH)]; */
 /*     response_t response; */
 /*     unsigned int num_packets, packet_num, modded_packet_num; */
 
-/*     if (!midisds_read_header(fd, buf, sizeof(buf), err)) { */
+/*     if (!midisd_read_header(fd, buf, sizeof(buf), err)) { */
 /*         return 0; */
 /*     } else { */
-/*         midisds_display_header(buf); */
+/*         midisd_display_header(buf); */
 /*     } */
 
 /*     /\* patch in channel number *\/ */
@@ -175,7 +175,7 @@ static void midisds_format_header(midisds_header_t hdr,
 /*     buf[4] =  sample_num       & 0x7f; */
 /*     buf[5] = (sample_num >> 7) & 0x7f; */
 
-/*     if (!midisds_send(midi, buf, MIDISDS_HEADER_LENGTH)) { */
+/*     if (!midisd_send(midi, buf, MIDISD_HEADER_LENGTH)) { */
 /*         return 0; */
 /*     } */
 
@@ -190,18 +190,18 @@ static void midisds_format_header(midisds_header_t hdr,
 /*         return 0; */
 /*     } */
 
-/*     num_packets = midisds_calc_num_packets(file_size); */
+/*     num_packets = midisd_calc_num_packets(file_size); */
 /*     for (packet_num=0; packet_num < num_packets; ) { */
 /*         modded_packet_num = packet_num % 0x80; */
 
-/*         if (!midisds_read_packet(fd, buf, sizeof(buf), err)) { */
+/*         if (!midisd_read_packet(fd, buf, sizeof(buf), err)) { */
 /*             return 0; */
 /*         } */
 
 /*         /\* XXX patch channel number *\/ */
 /*         /\* XXX patch packet number *\/ */
 
-/*         if (!midisds_send(midi, buf, MIDISDS_PACKET_LENGTH)) { */
+/*         if (!midisd_send(midi, buf, MIDISD_PACKET_LENGTH)) { */
 /*             return 0; */
 /*         } */
 
@@ -294,7 +294,7 @@ static void midisds_format_header(midisds_header_t hdr,
 /*     return "UNKNOWN"; */
 /* } */
 
-/* static int __midisds_read(int fd, size_t len, midisds_byte *buf, */
+/* static int __midisd_read(int fd, size_t len, midisd_byte *buf, */
 /*                           size_t buf_size) { */
 /*     ssize_t r; */
 

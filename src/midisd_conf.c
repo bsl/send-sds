@@ -1,21 +1,21 @@
 // for strdup, getline
 #define _XOPEN_SOURCE     700
 
-#define MIDISDS_MAX_CONF_ENTRIES      200
+#define MIDISD_MAX_CONF_ENTRIES      200
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "midisds_conf.h"
-#include "midisds_log.h"
+#include "midisd_conf.h"
+#include "midisd_log.h"
 
-static conf_entry_t conf[MIDISDS_MAX_CONF_ENTRIES];
+static conf_entry_t conf[MIDISD_MAX_CONF_ENTRIES];
 static int conf_entries = 0;
 
 static int parse(char* ln, conf_entry_t *en);
 
-void midisds_set_conf_for(const char *k, const char *v) {
+void midisd_set_conf_for(const char *k, const char *v) {
     conf_entry_t en;
     strcpy(en.key, k);
     strcpy(en.value, v);
@@ -24,7 +24,7 @@ void midisds_set_conf_for(const char *k, const char *v) {
 }
 
 // Returns 0 for failure, 1 for success
-char *midisds_get_conf_for(const char *k) {
+char *midisd_get_conf_for(const char *k) {
     int i;
 
     for (i = 0; i < conf_entries; i++) {
@@ -37,7 +37,7 @@ char *midisds_get_conf_for(const char *k) {
 }
 
 // Returns 0 for failure, number of entries in the file on success
-int midisds_read_conf_file(const char *filename) {
+int midisd_read_conf_file(const char *filename) {
     static size_t max_line_size = 200;
 
     conf_entry_t en;
@@ -53,7 +53,7 @@ int midisds_read_conf_file(const char *filename) {
         if (parse(lnp, &en) == 0) {
             // TODO: error handling
         } else {
-            midisds_set_conf_for(en.key, en.value);
+            midisd_set_conf_for(en.key, en.value);
             result++;
         }
     }
@@ -63,7 +63,7 @@ int midisds_read_conf_file(const char *filename) {
 }
 
 // Returns 0 for failure, 1 for success
-int midisds_get_conf_str(char *buf) {
+int midisd_get_conf_str(char *buf) {
     int i;
     char ln[200];
 

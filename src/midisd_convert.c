@@ -2,13 +2,13 @@
 #include <string.h>
 #include <sndfile.h>
 
-#include "midisds_convert.h"
+#include "midisd_convert.h"
 
 #define FRAME_BUF_SIZE       512
 
 static SF_INFO make_sds_info(SF_INFO input);
 
-int midisds_convert_to_sds_temp(const char *filename, char *tmpfilename) {
+int midisd_convert_to_sds_temp(const char *filename, char *tmpfilename) {
     SF_INFO sfinfo;
     SNDFILE *sndfile;
 

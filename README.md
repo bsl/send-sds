@@ -1,4 +1,4 @@
-libmidisds is a C library that uses alsa and libsndfile
+libmidisd is a C library that uses alsa and libsndfile
 to interface your Linux system with devices supporting
 the MIDI Sample Dump Standard.
 Right now it is a just a command-line tool to get the
@@ -19,7 +19,7 @@ taken directly from [bsl/send-sds][1].
 
 ### Commmand Line Interface
 ##### List MIDI interfaces
-    $ midisds iflist
+    $ midisd iflist
     Dir Device    Name
     IO  hw:1,0,0  Elektron TM-1 MIDI 1
 

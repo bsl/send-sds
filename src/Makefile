@@ -8,20 +8,20 @@ rm = rm -f
 
 .PHONY: clean all
 
-all: midisds
+all: midisd
 
-midisds: midisds_common.c \
-		 midisds_cli.c \
-		 midisds_conf.c \
-	     midisds_log.c \
-	     midisds_dump.c \
-         midisds_convert.c \
-         midisds_rawmidi.c \
-		 midisds_send.c \
-		 midisds_receive.c \
-		 midisds_sndfile.c \
-		 midisds_command.c
-	$(CC) $(CFLAGS) -o $@ midisds_main.c $^ $(LDLIBS)
+midisd: midisd_common.c \
+		midisd_cli.c \
+	    midisd_conf.c \
+	    midisd_log.c \
+	    midisd_dump.c \
+        midisd_convert.c \
+        midisd_rawmidi.c \
+	    midisd_send.c \
+		midisd_receive.c \
+		midisd_sndfile.c \
+		midisd_command.c
+	$(CC) $(CFLAGS) -o $@ midisd_main.c $^ $(LDLIBS)
 
 clean:
-	-$(rm) *.o *~ midisds
+	-$(rm) *.o *~ midisd

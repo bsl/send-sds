@@ -2,20 +2,20 @@
 
 #include <sndfile.h>
 
-#include "midisds_sndfile.h"
+#include "midisd_sndfile.h"
 
-midisds_sndfile_t midisds_sndfile_open(const char *filename, int mode) {
-    midisds_sndfile_t sf;
+midisd_sndfile_t midisd_sndfile_open(const char *filename, int mode) {
+    midisd_sndfile_t sf;
     sf.sf = sf_open(filename, mode, sf.info);
     return sf;
 }
 
-int midisds_sndfile_close(const midisds_sndfile_t *sf) {
+int midisd_sndfile_close(const midisd_sndfile_t *sf) {
     return sf_close(sf->sf);
 }
 
 // Stringify SF_INFO.format
-int midisds_get_format_info(const midisds_sndfile_t *sf, char *buf) {
+int midisd_get_format_info(const midisd_sndfile_t *sf, char *buf) {
     SF_INFO *sf_info = sf->info;
     SF_FORMAT_INFO fmtinfo;
     int major_count, subtype_count, m, s;
@@ -46,6 +46,6 @@ int midisds_get_format_info(const midisds_sndfile_t *sf, char *buf) {
     return 1;
 }
 
-int midisds_sf_is_sds(const midisds_sndfile_t *sf) {
+int midisd_sf_is_sds(const midisd_sndfile_t *sf) {
     return ((sf->info->format & SF_FORMAT_TYPEMASK) == SF_FORMAT_SDS);
 }
