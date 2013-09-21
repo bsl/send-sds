@@ -8,6 +8,7 @@
 
 static SF_INFO make_sds_info(SF_INFO input);
 
+// Returns nonzero for failure, zero for success
 int midisd_convert_to_sds_temp(const char *filename, char *tmpfilename) {
     SF_INFO sfinfo;
     SNDFILE *sndfile;
@@ -68,6 +69,5 @@ static SF_INFO make_sds_info(SF_INFO input) {
     // subtype is whatever the subtype of input is (as long as
     // this is passes sf_format_check)
     output.format = SF_FORMAT_SDS | (input.format & SF_FORMAT_SUBMASK);
-    
     return output;
 }

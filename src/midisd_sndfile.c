@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 
 #include <sndfile.h>
@@ -7,6 +8,16 @@
 midisd_sndfile_t midisd_sndfile_open(const char *filename, int mode) {
     midisd_sndfile_t sf;
     sf.sf = sf_open(filename, mode, sf.info);
+
+    if (sf.sf == NULL) {
+        char err_msg[512]; err_msg[0] = '\0';
+        sprintf(err_msg, "%s: in function '%s'\n%s:%d: "
+                "Could not open %s", __FILE__, __FUNCTION__, __FILE__,
+                __LINE__, filename);
+        perror(err_msg);
+        exit(1);
+    }
+
     return sf;
 }
 

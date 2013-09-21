@@ -74,7 +74,14 @@ ssize_t midisd_send_file(midisd_send_file_options_t *options) {
         char tmpfilename[100];
         tmpfilename[0] = '\0';
         // TODO: error handling
-        midisd_convert_to_sds_temp(options->filename, tmpfilename);
+        int convert_failed = midisd_convert_to_sds_temp(options->filename,
+                                                        tmpfilename);
+
+        if (convert_failed) {
+            perror("Failed to convert file to sds.");
+            exit(1);
+        }
+
         strcpy(options->filename, tmpfilename);
         return midisd_send_file(options);
     }
