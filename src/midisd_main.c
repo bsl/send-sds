@@ -20,12 +20,14 @@ void print_usage(void);
 
 int main(int argc, char** argv) {
     const char *conf_file = "/etc/midisd.conf";
+    midisd_log_trace("using %s for runtime configuration", conf_file);
 
     char *command_string;
     MIDISD_COMMAND command = MIDISD_COMMAND_UNKNOWN;
     midisd_send_file_options_t send_file_opts;
     int exit_code = 0;
 
+    midisd_log_trace("checking arguments");
     if (argc < 2) {
         print_usage();
         exit(1);
@@ -55,6 +57,7 @@ int main(int argc, char** argv) {
             midisd_help(MIDISD_COMMAND_HELP);
             exit_code = 1;
         } else {
+            midisd_log_trace("getting help");
             exit_code = midisd_help(midisd_string_to_command(argv[2]));
         }
         break;

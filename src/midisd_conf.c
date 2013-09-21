@@ -46,6 +46,17 @@ int midisd_read_conf_file(const char *filename) {
     size_t line_sz = max_line_size;
 
     FILE *fp = fopen(filename, "r");
+
+    if (fp == NULL) {
+        // file not found
+        char error_msg[512]; error_msg[0] = '\0';
+        sprintf(error_msg, "%s: in function '%s':\n%s:%d: "
+                "Could not open %s", __FILE__, __FUNCTION__,
+                __FILE__, __LINE__, filename);
+        perror(error_msg);
+        exit(1);
+    }
+
     char *lnp = malloc(sizeof(char[max_line_size]));
 
     while (rd != -1) {

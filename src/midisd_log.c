@@ -5,7 +5,7 @@
 
 #include "midisd_log.h"
 
-static midisd_log_level log_level = midisd_log_level_debug;
+static midisd_log_level log_level = midisd_log_level_error;
 
 typedef struct __log_level_info {
     midisd_log_level l;
