@@ -1,6 +1,6 @@
 bin_PROGRAMS = midisd
 
-midisd_LDFLAGS = $(shell pkg-config --cflags --libs alsa sndfile)
+# midisd_LDFLAGS = $(shell pkg-config --cflags --libs alsa sndfile)
 
 midisd_SOURCES = midisd_main.c \
                  midisd_cli.c \
@@ -16,6 +16,4 @@ midisd_SOURCES = midisd_main.c \
                  midisd_sndfile.c
 
 
-# midisd_LDADD = $(shell pkg-config --cflags --libs alsa sndfile)
 midisd_LDADD = -lasound -lsndfile
-# AM_LDFLAGS = -lasound -lsndfile

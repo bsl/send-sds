@@ -52,8 +52,6 @@ am_midisd_OBJECTS = midisd_main.$(OBJEXT) midisd_cli.$(OBJEXT) \
 	midisd_receive.$(OBJEXT) midisd_sndfile.$(OBJEXT)
 midisd_OBJECTS = $(am_midisd_OBJECTS)
 midisd_DEPENDENCIES =
-midisd_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(midisd_LDFLAGS) \
-	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -153,7 +151,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-midisd_LDFLAGS = $(shell pkg-config --cflags --libs alsa sndfile)
+
+# midisd_LDFLAGS = $(shell pkg-config --cflags --libs alsa sndfile)
 midisd_SOURCES = midisd_main.c \
                  midisd_cli.c \
                  midisd_command.c \
@@ -167,8 +166,6 @@ midisd_SOURCES = midisd_main.c \
                  midisd_receive.c \
                  midisd_sndfile.c
 
-
-# midisd_LDADD = $(shell pkg-config --cflags --libs alsa sndfile)
 midisd_LDADD = -lasound -lsndfile
 all: all-am
 
@@ -183,9 +180,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign src/Makefile
+	  $(AUTOMAKE) --gnu src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -243,7 +240,7 @@ clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 midisd$(EXEEXT): $(midisd_OBJECTS) $(midisd_DEPENDENCIES) $(EXTRA_midisd_DEPENDENCIES) 
 	@rm -f midisd$(EXEEXT)
-	$(midisd_LINK) $(midisd_OBJECTS) $(midisd_LDADD) $(LIBS)
+	$(LINK) $(midisd_OBJECTS) $(midisd_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -481,7 +478,6 @@ uninstall-am: uninstall-binPROGRAMS
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am uninstall-binPROGRAMS
 
-# AM_LDFLAGS = -lasound -lsndfile
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

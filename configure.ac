@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.68])
 AC_INIT([libmidisd], [0.0.1], [bsorahan@gmail.com])
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([-Wall -Werror gnu])
 AC_CONFIG_SRCDIR([src/midisd_receive.c])
 
 # Checks for programs.
