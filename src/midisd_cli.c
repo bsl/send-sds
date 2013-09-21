@@ -1,5 +1,6 @@
-#include "midisd_send.h"
 #include "midisd_cli.h"
+#include "midisd_common.h"
+#include "midisd_send.h"
 
 midisd_send_file_options_t
 midisd_parse_send_file_options(int argc, char **argv) {

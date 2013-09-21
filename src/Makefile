@@ -45,13 +45,13 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_midisd_OBJECTS = midisd_main.$(OBJEXT) midisd_cli.$(OBJEXT) \
-	midisd_command.$(OBJEXT) midisd_conf.$(OBJEXT) \
-	midisd_log.$(OBJEXT) midisd_dump.$(OBJEXT) \
-	midisd_convert.$(OBJEXT) midisd_rawmidi.$(OBJEXT) \
-	midisd_send.$(OBJEXT) midisd_receive.$(OBJEXT) \
-	midisd_sndfile.$(OBJEXT)
+	midisd_command.$(OBJEXT) midisd_common.$(OBJEXT) \
+	midisd_conf.$(OBJEXT) midisd_log.$(OBJEXT) \
+	midisd_dump.$(OBJEXT) midisd_convert.$(OBJEXT) \
+	midisd_rawmidi.$(OBJEXT) midisd_send.$(OBJEXT) \
+	midisd_receive.$(OBJEXT) midisd_sndfile.$(OBJEXT)
 midisd_OBJECTS = $(am_midisd_OBJECTS)
-midisd_LDADD = $(LDADD)
+midisd_DEPENDENCIES =
 midisd_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(midisd_LDFLAGS) \
 	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.
@@ -157,6 +157,7 @@ midisd_LDFLAGS = $(shell pkg-config --cflags --libs alsa sndfile)
 midisd_SOURCES = midisd_main.c \
                  midisd_cli.c \
                  midisd_command.c \
+                 midisd_common.c \
                  midisd_conf.c \
                  midisd_log.c \
                  midisd_dump.c \
@@ -166,6 +167,9 @@ midisd_SOURCES = midisd_main.c \
                  midisd_receive.c \
                  midisd_sndfile.c
 
+
+# midisd_LDADD = $(shell pkg-config --cflags --libs alsa sndfile)
+midisd_LDADD = -lasound -lsndfile
 all: all-am
 
 .SUFFIXES:
@@ -249,6 +253,7 @@ distclean-compile:
 
 include ./$(DEPDIR)/midisd_cli.Po
 include ./$(DEPDIR)/midisd_command.Po
+include ./$(DEPDIR)/midisd_common.Po
 include ./$(DEPDIR)/midisd_conf.Po
 include ./$(DEPDIR)/midisd_convert.Po
 include ./$(DEPDIR)/midisd_dump.Po
@@ -476,8 +481,6 @@ uninstall-am: uninstall-binPROGRAMS
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am uninstall-binPROGRAMS
 
-
-# midisd_LDADD = $(shell pkg-config --cflags --libs alsa sndfile)
 # AM_LDFLAGS = -lasound -lsndfile
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
