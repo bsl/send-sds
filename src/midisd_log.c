@@ -1,10 +1,15 @@
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "midisd_log.h"
 
+static int log_to_file = 1;
+static int fd = -2;
 static midisd_log_level log_level = midisd_log_level_error;
 
 typedef struct __log_level_info {
@@ -37,10 +42,14 @@ log_level_info_arr[midisd_log_level_unknown] = {
 };
 
 static int should_log(midisd_log_level req);
-static void make_log_message(const char *str, char *buf, \
+
+static void make_log_message(const char *str, char *buf,
                              midisd_log_level level);
+
 static const char *log_level_to_string(midisd_log_level l);
-static void log_message(midisd_log_level level, const char *fmt, va_list ap);
+
+static void log_message(midisd_log_level level, const char *fmt,
+                        va_list ap);
 static midisd_log_level str_to_level(char *);
 
 void midisd_log_error(const char *fmt, ...) {
@@ -133,7 +142,8 @@ static const char *log_level_to_string(midisd_log_level l) {
 }
 
 static void log_message(midisd_log_level level, const char *fmt, va_list ap) {
-    char msgbuf[500];
+    const size_t write_sz = 512;
+    char msgbuf[write_sz];
     msgbuf[0] = '\0';
 
     char sbuf[500];
@@ -144,10 +154,25 @@ static void log_message(midisd_log_level level, const char *fmt, va_list ap) {
     if (should_log(level)) {
         make_log_message(sbuf, msgbuf, level);
 
-        if (log_level < midisd_log_level_info) {
-            printf("%s", msgbuf);
+        if (log_to_file) {
+            if (fd == -2) {
+                // open file
+                fd = open("midisd.log", O_WRONLY | O_CREAT,
+                          S_IRWXU | S_IRWXG | S_IROTH);
+                if (fd == -1) {
+                    log_to_file = 0;
+                } else {
+                    if (write(fd, msgbuf, write_sz) != write_sz) {
+                        // TODO: handle error
+                    }
+                }
+            }
         } else {
-            fprintf(stderr, "%s", msgbuf);
+            if (log_level < midisd_log_level_info) {
+                printf("%s", msgbuf);
+            } else {
+                fprintf(stderr, "%s", msgbuf);
+            }
         }
     }
 }

@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
         midisd_set_log_level_str(log_level);
     }
 
+    /* midisd_log_error("test write to file"); */
     command_string = argv[1];
     command = midisd_string_to_command(command_string);
 
