@@ -3,12 +3,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
 
 #include "err.h"
 #include "midi.h"
 #include "sds.h"
 
-#define VERSION "2010.10.23"
+#define VERSION "0.0.1"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -65,6 +66,14 @@ send_file(
 
 static int
 get_response(
+    midi_t midi,
+    unsigned int channel_num,
+    unsigned int modded_packet_num,
+    response_t *response
+);
+
+static int
+get_response2(
     midi_t midi,
     unsigned int channel_num,
     unsigned int modded_packet_num,
@@ -315,6 +324,8 @@ get_response(
     unsigned int modded_packet_num,
     response_t *response
 ) {
+    const time_t start_time = time(NULL);
+
     int done;
     unsigned char c, x;
     response_state_t state;
