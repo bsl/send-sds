@@ -14,4 +14,4 @@ send-sds: $(sources) $(headers)
 
 .PHONY: clean
 clean:
-	-$(rm) send-sds
+	-$(rm) send-sds *.log

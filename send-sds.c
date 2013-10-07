@@ -1,5 +1,3 @@
-#define _XOPEN_SOURCE 500 // for usleep
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -255,8 +253,6 @@ send_file(
     } else {
         sds_serialize_header(dump_header_str, buf);
         printf("%sSent %s\n", indent, dump_header_str);
-        // wait 1s
-        sleep(1);
     }
 
     if (!get_response(midi, channel_num, 0, &response)) {
@@ -285,8 +281,6 @@ send_file(
         printf("Packet %d\n", modded_packet_num);
 
         if (__TRACE_SEND_PACKETS) {
-            printf("%s %s modded_packet_num = %X\n",
-                   trace, __FUNCTION__, modded_packet_num);
             printf("%s %s reading packet %d\n",
                    trace, __FUNCTION__, packet_num);
         }
