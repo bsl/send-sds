@@ -42,11 +42,17 @@ sds_read_header(
 );
 
 int
+sds_serialize_header(char *str, unsigned char *buf);
+
+int
 sds_read_packet(
     int fd,
     unsigned char *buf,
     size_t buf_size,
     err_t err
 );
+
+int
+sds_serialize_packet(char *str, unsigned char *buf);
 
 #endif

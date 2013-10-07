@@ -92,6 +92,20 @@ sds_read_header(
 }
 
 int
+sds_serialize_header(char *str, unsigned char *buf) {
+    int i;
+    int chars = 0;
+    char cstr[4]; cstr[0] = '\0';
+    for (i = 0; i < SDS_HEADER_LENGTH; i++) {
+        chars += sprintf(cstr, "%X ", buf[i]);
+        str = strcat(str, cstr);
+    }
+    // write null to the last space
+    str[chars - 1] = '\0';
+    return 1;
+}
+
+int
 sds_read_packet(
     int fd,
     unsigned char *buf,
@@ -99,6 +113,28 @@ sds_read_packet(
     err_t err
 ) {
     return sds_read(fd, SDS_PACKET_LENGTH, buf, buf_size, err);
+}
+
+int
+sds_serialize_packet(char *str, unsigned char *buf) {
+    int i;
+    int chars = 0;
+    char cstr[8]; cstr[0] = '\0';
+    for (i = 0; i < 5; i++) {
+        chars += sprintf(cstr, "%X ", buf[i]);
+        str = strcat(str, cstr);
+    }
+
+    chars += sprintf(cstr, " ... ");
+    str = strcat(str, cstr);
+
+    for (i = 125; i < 127; i++) {
+        chars += sprintf(cstr, "%X ", buf[i]);
+        str = strcat(str, cstr);
+    }
+
+    str[chars - 1] = '\0';
+    return 1;
 }
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
