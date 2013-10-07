@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <time.h>
 
+#include "common.h"
 #include "err.h"
 #include "midi.h"
 #include "sds.h"
@@ -13,52 +14,10 @@
 #define __TRACE_GET_RESPONSE 1
 #define __TRACE_SEND_PACKETS 1
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-typedef enum {
-    STATE0,  /* seen [],             hoping for f0             */
-    STATE1,  /* seen [f0]            hoping for 7e             */
-    STATE2,  /* seen [f0,7e]         hoping for channel number */
-    STATE3,  /* seen [f0,7e,CN]      hoping for 7{c,d,e,f}     */
-    STATE4,  /* seen [f0,7e,CN,x]    hoping for packet number  */
-    STATE5,  /* seen [f0,7e,CN,x,PN] hoping for f7             */
-} response_state_t;
-
-typedef enum {
-    // part of the spec
-    RESPONSE_ACK,
-    RESPONSE_NAK,
-    RESPONSE_CANCEL,
-    RESPONSE_WAIT,
-    // not part of the spec
-    RESPONSE_TIMEOUT,
-    RESPONSE_NULL
-} response_t;
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static void
 display_usage(void);
-
-static int
-convert_channel_num(
-    char *s,
-    unsigned int *channel_num,
-    err_t err
-);
-
-static int
-convert_sample_num(
-    char *s,
-    unsigned int *channel_num,
-    err_t err
-);
-
-static int
-convert_string_to_unsigned_int(
-    char *s,
-    unsigned int *ui
-);
 
 static int
 send_file(
@@ -140,7 +99,7 @@ end:
     return ret;
 }
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 
 static void
 display_usage(void)
@@ -150,71 +109,6 @@ display_usage(void)
         "send-sds " VERSION "\n"
         "usage: <alsa-device> <channel-num> <sample-num> <sds-filename>\n"
     );
-}
-
-static int
-convert_channel_num(
-    char *s,
-    unsigned int *channel_num,
-    err_t err
-) {
-    unsigned int ui;
-
-    if (!convert_string_to_unsigned_int(s, &ui)) {
-        err_set2(err, "invalid channel number \"%s\"", s);
-        return 0;
-    }
-
-    if (ui > 15) {
-        err_set2(err, "invalid channel number \"%s\", should be 0..15", s);
-    }
-
-    *channel_num = ui;
-    return 1;
-}
-
-static int
-convert_sample_num(
-    char *s,
-    unsigned int *sample_num,
-    err_t err
-) {
-    unsigned int ui;
-
-    if (!convert_string_to_unsigned_int(s, &ui)) {
-        err_set2(err, "invalid sample number \"%s\"", s);
-        return 0;
-    }
-
-    if (ui > 16383) {
-        err_set2(err, "invalid sample number \"%s\", should be 0..16383", s);
-    }
-
-    *sample_num = ui;
-    return 1;
-}
-
-static int
-convert_string_to_unsigned_int(
-    char *s,
-    unsigned int *ui
-) {
-    char *endptr;
-    unsigned int c;
-
-    errno = 0;
-    c = strtoul(s, &endptr, 0);
-
-    if (
-        errno   != 0    ||
-        *s      == '\0' ||
-        *endptr != '\0'
-    ) {
-        return 0;
-    }
-
-    *ui = c;
-    return 1;
 }
 
 #define max(a,b) ((a) > (b) ? (a) : (b))
