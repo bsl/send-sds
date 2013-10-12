@@ -21,6 +21,8 @@ midi_close_interface(
     midi_t midi
 );
 
+/* int midi_flush(midi_t midi); */
+
 int
 midi_send(
     midi_t midi,

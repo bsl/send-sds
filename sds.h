@@ -7,6 +7,7 @@
 
 #define SDS_HEADER_LENGTH 21
 #define SDS_PACKET_LENGTH 127
+#define SDS_AUDIO_BYTES_PER_PACKET 120
 
 int
 sds_open_file(
@@ -53,6 +54,6 @@ sds_read_packet(
 );
 
 int
-sds_serialize_packet(char *str, unsigned char *buf);
+sds_serialize_packet(char *str, unsigned char *buf, int sds_packet_length);
 
 #endif

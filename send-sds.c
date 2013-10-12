@@ -10,11 +10,20 @@
 #include "midi.h"
 #include "sds.h"
 
-#define VERSION "0.0.1"
-#define __TRACE_GET_RESPONSE 1
-#define __TRACE_SEND_PACKETS 1
+#define __TRACE_GET_RESPONSE 0
+#define __DEBUG_GET_RESPONSE 1
+#define __TRACE_SEND_PACKETS 0
 
 
+
+typedef enum {
+    STATE0,  /* seen [],             hoping for f0             */
+    STATE1,  /* seen [f0]            hoping for 7e             */
+    STATE2,  /* seen [f0,7e]         hoping for channel number */
+    STATE3,  /* seen [f0,7e,CN]      hoping for 7{c,d,e,f}     */
+    STATE4,  /* seen [f0,7e,CN,x]    hoping for packet number  */
+    STATE5,  /* seen [f0,7e,CN,x,PN] hoping for f7             */
+} response_state_t;
 
 static void
 display_usage(void);
@@ -37,10 +46,7 @@ get_response(
     response_t *response
 );
 
-static const char *
-response_to_string(response_t response);
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int main(int argc, char **argv)
 {
@@ -72,15 +78,14 @@ int main(int argc, char **argv)
     sample_string  = argv[3];
     filename       = argv[4];
 
-    if (
-        !convert_channel_num(channel_string, &channel_num, err) ||
+    if (!convert_channel_num(channel_string, &channel_num, err) ||
         !convert_sample_num(sample_string, &sample_num, err)    ||
         !midi_open_interface(device, &midi, err)                ||
         !sds_open_file(filename, &fd, err)                      ||
         !sds_get_file_size(fd, &file_size, err)                 ||
         !sds_file_size_is_ok(file_size, err)                    ||
-        !send_file(fd, file_size, midi, channel_num, sample_num, err)
-    ) {
+        !send_file(fd, file_size, midi, channel_num, sample_num, err)) {
+
         fprintf(stderr, "%s\n", err_get(err));
         goto end;
     }
@@ -110,8 +115,6 @@ display_usage(void)
         "usage: <alsa-device> <channel-num> <sample-num> <sds-filename>\n"
     );
 }
-
-#define max(a,b) ((a) > (b) ? (a) : (b))
 
 static int
 send_file(
@@ -198,7 +201,7 @@ send_file(
         if (!midi_send(midi, buf, SDS_PACKET_LENGTH, err)) {
             return 0;
         } else {
-            sds_serialize_packet(packet_str, buf);
+            sds_serialize_packet(packet_str, buf, SDS_PACKET_LENGTH);
             printf("%sSent %s\n", indent, packet_str);
         }
 
@@ -237,22 +240,22 @@ send_file(
 }
 
 static int
-get_response(
-    midi_t midi,
-    unsigned int channel_num,
-    unsigned int modded_packet_num,
-    response_t *response
-) {
+get_response(midi_t midi,
+             unsigned int channel_num,
+             unsigned int modded_packet_num,
+             response_t *response) {
     const time_t start_time = time(NULL);
     const time_t timeout_sec = 2;
     const char *trace = "[TRACE]";
+    const size_t packet_buf_size = __ELEKTRON_STRANGE_PACKET_LENGTH * 2;
 
-    int done;
+    int done, bytes_read, i;
     time_t now;
     unsigned char c, x;
+    unsigned char buf[packet_buf_size];
     response_state_t state;
 
-    done = 0;
+    done = bytes_read = 0;
     state = STATE0;
 
     while (!done) {
@@ -260,10 +263,27 @@ get_response(
 
         if (!midi_read(midi, &c)) {
             return 0;
+        } else {
+            buf[bytes_read++] = c;
+        }
+
+        if (bytes_read == packet_buf_size) {
+            printf("Maximum bytes read\n");
+            return 0;
         }
 
         if (now - start_time > timeout_sec) {
             *response = RESPONSE_TIMEOUT;
+
+            if (__DEBUG_GET_RESPONSE) {
+                printf("Bytes received  = %d", bytes_read);
+                printf("Data: ");
+                for (i = 0; i < bytes_read; i++) {
+                    printf("%02X ", buf[i]);
+                }
+                printf("\n");
+            }
+
             return 0;
         }
 
@@ -337,19 +357,4 @@ get_response(
     }
 
     return 0;
-}
-
-static const char *
-response_to_string(response_t response)
-{
-    switch (response) {
-    case RESPONSE_ACK:    return "ACK";
-    case RESPONSE_NAK:    return "NAK";
-    case RESPONSE_CANCEL: return "CANCEL";
-    case RESPONSE_WAIT:   return "WAIT";
-    case RESPONSE_TIMEOUT: return "TIMEOUT";
-    case RESPONSE_NULL: return "NULL";
-    }
-
-    return "UNKNOWN";
 }

@@ -71,3 +71,16 @@ convert_string_to_unsigned_int(
     return 1;
 }
 
+const char *
+response_to_string(response_t response) {
+    switch (response) {
+    case RESPONSE_ACK:     return "ACK";
+    case RESPONSE_NAK:     return "NAK";
+    case RESPONSE_CANCEL:  return "CANCEL";
+    case RESPONSE_WAIT:    return "WAIT";
+    case RESPONSE_TIMEOUT: return "TIMEOUT";
+    case RESPONSE_NULL:    return "NULL";
+    }
+
+    return "UNKNOWN";
+}

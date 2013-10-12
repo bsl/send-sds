@@ -57,6 +57,12 @@ midi_close_interface(
     free(midi);
 }
 
+/* int */
+/* midi_flush(midi_t midi) { */
+/*     return (snd_rawmidi_drop(midi->handle_out) == 0) */
+/*         && (snd_rawmidi_drop(midi->handle_in) == 0); */
+/* } */
+
 int
 midi_send(
     midi_t midi,
