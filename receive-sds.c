@@ -16,9 +16,9 @@
 #define __DEBUG_READ_DUMP_HEADER 1
 #define __TRACE_READ_DUMP_HEADER_WAIT 0
 
-#define __TRACE_READ_PACKET 0
+#define __TRACE_READ_PACKET 1
 #define __DEBUG_READ_PACKET 1
-#define __TRACE_READ_PACKET_WAIT 0
+#define __TRACE_READ_PACKET_WAIT 1
 
 #define SDS_RESPONSE_LENGTH 6
 
@@ -38,7 +38,8 @@ typedef enum {
     PACKET_STATE2,  /* seen [f0,7e]               hoping for channel number */
     PACKET_STATE3,  /* seen [f0,7e,CN]            hoping for 01,... */
     PACKET_STATE4,  /* seen [f0,7e,CN,02,]        hoping for packet number */
-    PACKET_STATE5   /* seen [f0,7e,CN,02,...]     reading waveform data, hoping for f7 */
+    PACKET_STATE5,  /* seen [f0,7e,CN,02,...]     reading waveform data, hoping for ll */
+    PACKET_STATE6   /* seen [f0,7e,CN,02,...,ll]  hoping for f7 */
 } receive_packet_state_t;
 
 
@@ -150,7 +151,6 @@ receive_sample(int fd,
     } else {
         printf("Sending ACK\n");
         if (send_response(midi, channel_num, modded_packet_num, RESPONSE_ACK, err)) {
-            modded_packet_num = ++packet_num % 128;
             printf("Handshake successful. Begin closeloop transfer.\n");
         }
     }
@@ -314,7 +314,6 @@ read_packet(midi_t midi,
         if (! midi_read(midi, &c)) {
             err_set2(err, "Could not read midi");
             return 0;
-        } else {
         }
 
         switch(state) {
@@ -360,7 +359,7 @@ read_packet(midi_t midi,
                 buf[bytes_read++] = c;
 
                 if (__TRACE_READ_PACKET) {
-                    printf("%s%s Read fourth byte of packet\n", indent, trace);
+                    printf("%s%s Read third byte of packet\n", indent, trace);
                 }
             } else {
                 if (__TRACE_READ_PACKET) {
@@ -378,7 +377,7 @@ read_packet(midi_t midi,
                 }
             } else {
                 if (__TRACE_READ_PACKET) {
-                    printf("Read %d but expected %d in packet\n", c, modded_packet_num);
+                    printf("Read %02X but expected %d in packet\n", c, modded_packet_num);
                 }
             }
             break;
@@ -388,19 +387,24 @@ read_packet(midi_t midi,
             if (audio_bytes_read < SDS_AUDIO_BYTES_PER_PACKET) {
                 audio_bytes_read++;
             } else {
-                if (c == 0xf7) {
-                    done = 1;
+                state = PACKET_STATE6;
+            }
+            break;
+        case PACKET_STATE6:
+            buf[bytes_read++] = c;
 
-                    if (__TRACE_READ_PACKET) {
-                        printf("%s%s Read last byte of packet\n", indent, trace);
-                        printf("%s%s Total bytes read = %d\n", indent, trace, bytes_read);
-                    }
-                    if (__DEBUG_READ_PACKET) {
-                        strbuf[0] = '\0';
-                        sds_serialize_packet(strbuf, buf, bytes_read);
-                        printf("%s%s Total bytes read = %d\n", indent, trace, bytes_read);
-                        printf("Received Packet %s\n", strbuf);
-                    }
+            if (c == 0xf7) {
+                done = 1;
+
+                if (__TRACE_READ_PACKET) {
+                    printf("%s%s Read last byte of packet\n", indent, trace);
+                    printf("%s%s Total bytes read = %d\n", indent, trace, bytes_read);
+                }
+                if (__DEBUG_READ_PACKET) {
+                    strbuf[0] = '\0';
+                    sds_serialize_packet(strbuf, buf, bytes_read);
+                    printf("%s%s Total bytes read = %d\n", indent, trace, bytes_read);
+                    printf("Received Packet %s\n", strbuf);
                 }
             }
             break;
