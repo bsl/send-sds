@@ -3,7 +3,7 @@ compiler_flags = -std=c99 -pedantic -W -Wall -Wno-variadic-macros -Waggregate-re
 
 sources   = common.c err.c midi.c sds.c
 headers   = $(wildcard *.h)
-libraries = -lasound
+libraries = -lasound -lsndfile
 
 rm = rm -f
 

@@ -31,19 +31,18 @@ display_usage(void);
 static int
 receive_sample(int fd,
                midi_t midi,
-               unsigned int sample_num,
                unsigned int channel_num,
                err_t err);
 
 static int
 read_dump_header(midi_t midi,
-                 unsigned int sample_num,
+                 unsigned char *buf,
                  unsigned int channel_num,
                  err_t err);
 
 static int
 read_packet(midi_t midi,
-            unsigned int sample_num,
+            unsigned char *buf,
             unsigned int channel_num,
             unsigned int modded_packet_num,
             err_t err);
@@ -57,8 +56,8 @@ send_response(midi_t midi,
 
 int main(int argc, char **argv) {
     int ret;
-    char *device, *channel_string, *sample_string, *filename;
-    unsigned int channel_num, sample_num;
+    char *device, *channel_string, *filename;
+    unsigned int channel_num;
     int fd;
     err_t err;
     midi_t midi;
@@ -67,27 +66,24 @@ int main(int argc, char **argv) {
     device = NULL;
     filename = NULL;
     channel_string = NULL;
-    sample_string = NULL;
     channel_num = 0;
     fd = 0;
     err = NULL;
     midi = NULL;
 
-    if (argc != 1 + 4) {
+    if (argc != 4) {
         display_usage();
         exit(249);
     }
 
     device = argv[1];
     channel_string = argv[2];
-    sample_string = argv[3];
-    filename = argv[4];
+    filename = argv[3];
 
     if (! convert_channel_num(channel_string, &channel_num, err) ||
-        ! convert_sample_num(sample_string, &sample_num, err)    ||
         ! midi_open_interface(device, &midi, err)                ||
         ! sds_open_file(filename, &fd, err)                      ||
-        ! receive_sample(fd, midi, sample_num, channel_num, err)) {
+        ! receive_sample(fd, midi, channel_num, err)) {
         fprintf(stderr, "Could not receive sample.\n");
     }
 
@@ -108,26 +104,29 @@ display_usage(void)
     fprintf(
         stderr,
         "receive-sds " VERSION "\n"
-        "usage: <alsa-device> <channel-num> <sample-num> <sds-filename>\n"
+        "usage: <alsa-device> <channel-num> <sds-filename>\n"
     );
 }
 
 static int
 receive_sample(int fd,
                midi_t midi,
-               unsigned int sample_num,
                unsigned int channel_num,
                err_t err) {
-    unsigned int packet_num;
+    unsigned char buf[READ_PACKET_BUF_SIZE];
+    int packet_num;
     packet_num = 0;
 
     printf("Initiating handshake.\n");
 
-    if (! read_dump_header(midi, sample_num, channel_num, err)) {
+    int header_bytes;
+    header_bytes = read_dump_header(midi, buf, channel_num, err);
+    if (header_bytes != SDS_HEADER_LENGTH) {
         return 0;
     } else {
         printf("Sending ACK...\n");
         if (send_response(midi, channel_num, packet_num, RESPONSE_ACK, err)) {
+            write(fd, buf, header_bytes);
             printf("Handshake successful. Begin closeloop transfer.\n");
         }
     }
@@ -136,7 +135,7 @@ receive_sample(int fd,
     readingPackets = 1;
 
     while (readingPackets) {
-        packet_size = read_packet(midi, sample_num, channel_num, packet_num, err);
+        packet_size = read_packet(midi, buf, channel_num, packet_num, err);
         if (packet_size != SDS_PACKET_LENGTH) {
             fprintf(stderr, "Received bad packet size %d\n", packet_size);
             readingPackets = 0;
@@ -144,7 +143,9 @@ receive_sample(int fd,
         } else {
             printf("Sending ACK...\n");
             if (send_response(midi, channel_num, packet_num, RESPONSE_ACK, err)) {
-                packet_num = ++packet_num % 128;
+                write(fd, buf, packet_size);
+                packet_num++;
+                packet_num %= 128;
             }
         }
     }
@@ -154,16 +155,14 @@ receive_sample(int fd,
 
 static int
 read_dump_header(midi_t midi,
-                 unsigned int sample_num,
+                 unsigned char *buf,
                  unsigned int channel_num,
                  err_t err) {
-    int done, i;
     int bytes_read;
     unsigned char c;
-    unsigned char buf[READ_PACKET_BUF_SIZE];
     char strbuf[200]; strbuf[0] = '\0';
 
-    done = bytes_read = 0;
+    bytes_read = 0;
 
     printf("Reading Dump Header\n");
 
@@ -196,7 +195,6 @@ read_dump_header(midi_t midi,
             break;
         case 20:
             if (c == 0xf7) {
-                done = 1;
                 buf[bytes_read++] = c;
             } else {
                 err_set2(err, "Got %02X as the last byte of dump header (expected F7).\n", c);
@@ -221,19 +219,17 @@ read_dump_header(midi_t midi,
  */
 static int
 read_packet(midi_t midi,
-            unsigned int sample_num,
+            unsigned char *buf,
             unsigned int channel_num,
             unsigned int modded_packet_num,
             err_t err) {
     const time_t timeout_sec = 1;
-
-    int done, i;
     int raw_bytes_read, bytes_read, audio_bytes_read;
     char strbuf[500]; strbuf[0] = '\0';
     unsigned char c;
-    unsigned char buf[READ_PACKET_BUF_SIZE];
+    /* unsigned char buf[READ_PACKET_BUF_SIZE]; */
 
-    done = raw_bytes_read = bytes_read = audio_bytes_read = 0;
+    raw_bytes_read = bytes_read = audio_bytes_read = 0;
 
     printf("Reading Packet %d\n", modded_packet_num);
 
@@ -283,7 +279,6 @@ read_packet(midi_t midi,
             break;
         case 126:
             if (c == 0xf7) {
-                done = 1;
                 buf[bytes_read++] = c;
             }
             break;
