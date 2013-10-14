@@ -10,6 +10,9 @@
 #include "midi.h"
 #include "sds.h"
 
+// Size of the buffer for reading midi data.
+#define READ_RESPONSE_BUF_SIZE 20
+
 #define __TRACE_GET_RESPONSE 0
 #define __DEBUG_GET_RESPONSE 1
 #define __TRACE_SEND_PACKETS 0
@@ -137,30 +140,29 @@ send_file(
     }
 
     /* patch in channel number */
-    buf[2] = (unsigned char)channel_num;
+    buf[2] = (unsigned char) channel_num;
 
     /* patch in sample number */
-    buf[4] =  sample_num       & 0x7f;
+    buf[4] = sample_num & 0x7f;
     buf[5] = (sample_num >> 7) & 0x7f;
 
-    printf("Dump Header\n");
     char dump_header_str[60]; dump_header_str[0] = '\0';
     if (!midi_send(midi, buf, SDS_HEADER_LENGTH, err)) {
         return 0;
     } else {
         sds_serialize_header(dump_header_str, buf);
-        printf("%sSent %s\n", indent, dump_header_str);
+        printf("Sent Dump Header: %s\n", dump_header_str);
     }
 
-    if (!get_response(midi, channel_num, 0, &response)) {
+    if (! get_response(midi, channel_num, 0, &response)) {
         fprintf(stderr, "could not get response");
         return 0;
     } else {
-        printf("%sReceived %s\n", indent, response_to_string(response));
+        printf("Received %s\n", response_to_string(response));
     }
 
     while (response != RESPONSE_ACK) {
-        if (!get_response(midi, channel_num, 0, &response)) {
+        if (! get_response(midi, channel_num, 0, &response)) {
             fprintf(stderr, "could not get response");
             return 0;
         } else {
@@ -246,95 +248,61 @@ get_response(midi_t midi,
              response_t *response) {
     const time_t start_time = time(NULL);
     const time_t timeout_sec = 2;
-    const char *trace = "[TRACE]";
-    const size_t packet_buf_size = __ELEKTRON_STRANGE_PACKET_LENGTH * 2;
 
-    int done, bytes_read, i;
+    int bytes_read;
     time_t now;
-    unsigned char c, x;
-    unsigned char buf[packet_buf_size];
-    response_state_t state;
+    unsigned char c, t;
 
-    done = bytes_read = 0;
-    state = STATE0;
+    bytes_read = 0;
 
-    while (!done) {
+    while (bytes_read < SDS_RESPONSE_LENGTH) {
         now = time(NULL);
 
         if (!midi_read(midi, &c)) {
-            return 0;
-        } else {
-            buf[bytes_read++] = c;
-        }
-
-        if (bytes_read == packet_buf_size) {
-            printf("Maximum bytes read\n");
             return 0;
         }
 
         if (now - start_time > timeout_sec) {
             *response = RESPONSE_TIMEOUT;
-
-            if (__DEBUG_GET_RESPONSE) {
-                printf("Bytes received  = %d", bytes_read);
-                printf("Data: ");
-                for (i = 0; i < bytes_read; i++) {
-                    printf("%02X ", buf[i]);
-                }
-                printf("\n");
-            }
-
             return 0;
         }
 
-        switch (state) {
-        case STATE0:
-            state = (c == 0xf0) ? STATE1 : STATE0;
-            if (__TRACE_GET_RESPONSE) {
-                printf("%s %s read first byte of response\n", trace, __FUNCTION__);
+        switch (bytes_read) {
+        case 0:
+            if (c == 0xf0) {
+                bytes_read++;
             }
             break;
 
-        case STATE1:
-            state = (c == 0x7e) ? STATE2 : STATE0;
-            if (__TRACE_GET_RESPONSE) {
-                printf("%s %s read second byte of response\n", trace, __FUNCTION__);
+        case 1:
+            if (c == 0x7e) {
+                bytes_read++;
             }
             break;
 
-        case STATE2:
-            state = (c == channel_num) ? STATE3 : STATE0;
-            if (__TRACE_GET_RESPONSE) {
-                printf("%s %s read channel num from response (%X)\n",
-                       trace, __FUNCTION__, channel_num);
+        case 2:
+            if (c == channel_num) {
+                bytes_read++;
             }                       
             break;
 
-        case STATE3:
-            state = (c >= 0x7c && c <= 0x7f) ? STATE4 : STATE0;
-            x = c;
-            if (__TRACE_GET_RESPONSE) {
-                printf("%s %s read fourth byte of response (%X)\n", trace, __FUNCTION__, x);
+        case 3:
+            if (c >= 0x7c && c <= 0x7f) {
+                t = c;
+                bytes_read++;
             }
             break;
 
-        case STATE4:
-            state = (c == modded_packet_num) ? STATE5 : STATE0;
-            if (__TRACE_GET_RESPONSE) {
-                printf("%s %s read modded_packet_num from response (%X)\n", trace, __FUNCTION__, c);
+        case 4:
+            if (c == modded_packet_num) {
+                bytes_read++;
             }
             break;
 
-        case STATE5:
+        case 5:
             if (c == 0xf7) {
-                if (__TRACE_GET_RESPONSE) {
-                    printf("%s %s read last byte of response\n", trace, __FUNCTION__);
-                }
-
-                done = 1;
-
-                switch (x) {
-                case 0x7C:
+                switch (t) {
+                case 0x7c:
                     *response = RESPONSE_WAIT;
                     break;
                 case 0x7d:
@@ -349,8 +317,6 @@ get_response(midi_t midi,
                 }
 
                 return 1;
-            } else {
-                state = STATE0;
             }
             break;
         }

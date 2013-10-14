@@ -5,6 +5,7 @@
 
 #include "err.h"
 
+#define SDS_RESPONSE_LENGTH 6
 #define SDS_HEADER_LENGTH 21
 #define SDS_PACKET_LENGTH 127
 #define SDS_AUDIO_BYTES_PER_PACKET 120

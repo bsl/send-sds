@@ -8,20 +8,8 @@
 #include "midi.h"
 #include "sds.h"
 
-/*
- * Size of the buffer for reading midi data.
- */
+// Size of the buffer for reading midi data.
 #define READ_PACKET_BUF_SIZE 1000
-
-#define __TRACE_READ_DUMP_HEADER 0
-#define __DEBUG_READ_DUMP_HEADER 1
-#define __TRACE_READ_DUMP_HEADER_WAIT 0
-
-#define __TRACE_READ_PACKET 1
-#define __DEBUG_READ_PACKET 1
-#define __TRACE_READ_PACKET_WAIT 1
-
-#define SDS_RESPONSE_LENGTH 6
 
 
 
