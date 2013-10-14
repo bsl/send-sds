@@ -1,8 +1,7 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
-#define VERSION "0.0.1"
-#define __ELEKTRON_STRANGE_PACKET_LENGTH 131
+#define VERSION "0.0.2"
 
 #include "err.h"
 
