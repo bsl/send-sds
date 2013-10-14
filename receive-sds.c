@@ -114,8 +114,8 @@ receive_sample(int fd,
                unsigned int channel_num,
                err_t err) {
     unsigned char buf[READ_PACKET_BUF_SIZE];
-    int packet_num;
-    packet_num = 0;
+    int packet_num, raw_packet_num;
+    raw_packet_num = packet_num = 0;
 
     printf("Initiating handshake.\n");
 
@@ -144,8 +144,8 @@ receive_sample(int fd,
             printf("Sending ACK...\n");
             if (send_response(midi, channel_num, packet_num, RESPONSE_ACK, err)) {
                 write(fd, buf, packet_size);
-                packet_num++;
-                packet_num %= 128;
+                raw_packet_num++;
+                packet_num = raw_packet_num % 128;
             }
         }
     }
@@ -223,13 +223,16 @@ read_packet(midi_t midi,
             unsigned int channel_num,
             unsigned int modded_packet_num,
             err_t err) {
+    const int checksum_byte = 125;
     const time_t timeout_sec = 1;
-    int raw_bytes_read, bytes_read, audio_bytes_read;
-    char strbuf[500]; strbuf[0] = '\0';
+    int raw_bytes_read, bytes_read;
+    char strbuf[1000]; strbuf[0] = '\0';
     unsigned char c;
-    /* unsigned char buf[READ_PACKET_BUF_SIZE]; */
+    unsigned char checksum;
 
-    raw_bytes_read = bytes_read = audio_bytes_read = 0;
+ /* sds_read_packet_start: */
+
+    raw_bytes_read = bytes_read = 0;
 
     printf("Reading Packet %d\n", modded_packet_num);
 
@@ -259,30 +262,50 @@ read_packet(midi_t midi,
             break;
         case 1:
             if (c == 0x7e) {
+                checksum = c;
                 buf[bytes_read++] = c;
             }
             break;
         case 2:
             if (c == channel_num) {
+                checksum ^= c;
                 buf[bytes_read++] = c;
             }
             break;
         case 3:
             if (c == 0x02) {
+                checksum ^= c;
                 buf[bytes_read++] = c;
             }
             break;
         case 4:
             if (c == modded_packet_num) {
+                checksum ^= c;
                 buf[bytes_read++] = c;
             }
+            break;
+        case 125:
+            buf[bytes_read++] = c;
             break;
         case 126:
             if (c == 0xf7) {
                 buf[bytes_read++] = c;
+
+                checksum &= 0x7f;
+                if (checksum != buf[checksum_byte]) {
+                    printf("Calculated checksum = %02X. Actual checksum = %02X.\n",
+                           checksum, buf[checksum_byte]);
+
+                    // attempt to re-read sample
+                    /* if (send_response(midi, channel_num, modded_packet_num, RESPONSE_NAK, err)) { */
+                    /*     printf("Sent NAK...\n"); */
+                    /*     goto sds_read_packet_start; */
+                    /* } */
+                }
             }
             break;
         default:
+            checksum ^= c;
             buf[bytes_read++] = c;
             break;
         }

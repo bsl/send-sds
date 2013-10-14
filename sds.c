@@ -7,6 +7,8 @@
 
 #include "sds.h"
 
+#define __SERIALIZE_INCLUDE_AUDIO_BYTES 1
+
 
 
 static int
@@ -126,8 +128,15 @@ sds_serialize_packet(char *str, unsigned char *buf, int packet_length) {
         str = strcat(str, cstr);
     }
 
-    chars += sprintf(cstr, " ... ");
-    str = strcat(str, cstr);
+    if (__SERIALIZE_INCLUDE_AUDIO_BYTES) {
+        for (i = 5; i < 125; i++) {
+            chars += sprintf(cstr, "%02X ", buf[i]);
+            str = strcat(str, cstr);
+        }
+    } else {
+        chars += sprintf(cstr, " ... ");
+        str = strcat(str, cstr);
+    }
 
     for (i = 125; i < packet_length; i++) {
         chars += sprintf(cstr, "%02X ", buf[i]);
@@ -138,7 +147,7 @@ sds_serialize_packet(char *str, unsigned char *buf, int packet_length) {
     return 1;
 }
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 
 static int
 sds_read(
