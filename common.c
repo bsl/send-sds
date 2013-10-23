@@ -72,7 +72,7 @@ convert_string_to_unsigned_int(
 }
 
 const char *
-response_to_string(response_t response) {
+response_to_string(response_type response) {
     switch (response) {
     case RESPONSE_ACK:     return "ACK";
     case RESPONSE_NAK:     return "NAK";

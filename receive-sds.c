@@ -39,7 +39,7 @@ static int
 send_response(midi_t midi,
               unsigned int channel_num,
               unsigned int packet_num,
-              response_t response,
+              response_type response,
               err_t err);
 
 int main(int argc, char **argv) {
@@ -216,7 +216,7 @@ read_packet(midi_t midi,
     int raw_bytes_read, bytes_read;
     char strbuf[1000]; strbuf[0] = '\0';
     unsigned char c;
-    unsigned char checksum;
+    unsigned int checksum = 0;
 
  /* sds_read_packet_start: */
 
@@ -250,13 +250,14 @@ read_packet(midi_t midi,
             break;
         case 1:
             if (c == 0x7e) {
-                checksum = c;
+                checksum ^= c;
                 buf[bytes_read++] = c;
             }
             break;
         case 2:
             if (c == channel_num) {
                 checksum ^= c;
+                printf("channel_num = %d\n", channel_num);
                 buf[bytes_read++] = c;
             }
             break;
@@ -269,6 +270,7 @@ read_packet(midi_t midi,
         case 4:
             if (c == modded_packet_num) {
                 checksum ^= c;
+                printf("modded_packet_num = %d\n", modded_packet_num);
                 buf[bytes_read++] = c;
             }
             break;
@@ -281,14 +283,16 @@ read_packet(midi_t midi,
 
                 checksum &= 0x7f;
                 if (checksum != buf[checksum_byte]) {
-                    printf("Calculated checksum = %02X. Actual checksum = %02X.\n",
-                           checksum, buf[checksum_byte]);
+                    /* printf("Calculated checksum = %02X. Actual checksum = %02X.\n", */
+                    /*        checksum, buf[checksum_byte]); */
 
                     // attempt to re-read sample
                     /* if (send_response(midi, channel_num, modded_packet_num, RESPONSE_NAK, err)) { */
                     /*     printf("Sent NAK...\n"); */
                     /*     goto sds_read_packet_start; */
                     /* } */
+                } else {
+                    printf("Checksums matched!\n");
                 }
             }
             break;
@@ -300,8 +304,9 @@ read_packet(midi_t midi,
     }
 
     sds_serialize_packet(strbuf, buf, bytes_read);
-    printf("Total bytes read = %d\n", bytes_read);
-    printf("Received Packet %s\n", strbuf);
+    /* printf("Total bytes read = %d\n", bytes_read); */
+    /* printf("Received Packet %s\n", strbuf); */
+    printf("Received Packet %d\n", modded_packet_num);
 
     return bytes_read;
 }
@@ -310,7 +315,7 @@ static int
 send_response(midi_t midi,
               unsigned int channel_num,
               unsigned int packet_num,
-              response_t response,
+              response_type response,
               err_t err) {
     unsigned char buf[SDS_RESPONSE_LENGTH];
 

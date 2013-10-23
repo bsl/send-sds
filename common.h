@@ -16,6 +16,11 @@ typedef enum {
     // not part of the spec
     RESPONSE_TIMEOUT,
     RESPONSE_NULL
+} response_type;
+
+typedef struct _response_t {
+    unsigned int packet_num;
+    response_type type;
 } response_t;
 
 int
@@ -39,6 +44,6 @@ convert_string_to_unsigned_int(
 );
 
 const char *
-response_to_string(response_t response);
+response_to_string(response_type response);
 
 #endif

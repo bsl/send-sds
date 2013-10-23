@@ -19,15 +19,6 @@
 
 
 
-typedef enum {
-    STATE0,  /* seen [],             hoping for f0             */
-    STATE1,  /* seen [f0]            hoping for 7e             */
-    STATE2,  /* seen [f0,7e]         hoping for channel number */
-    STATE3,  /* seen [f0,7e,CN]      hoping for 7{c,d,e,f}     */
-    STATE4,  /* seen [f0,7e,CN,x]    hoping for packet number  */
-    STATE5,  /* seen [f0,7e,CN,x,PN] hoping for f7             */
-} response_state_t;
-
 static void
 display_usage(void);
 
@@ -73,7 +64,7 @@ int main(int argc, char **argv)
 
     if (argc != 1+4) {
         display_usage();
-        goto end;
+        /* goto end; */
     }
 
     device         = argv[1];
@@ -86,16 +77,18 @@ int main(int argc, char **argv)
         !midi_open_interface(device, &midi, err)                ||
         !sds_open_file(filename, &fd, err)                      ||
         !sds_get_file_size(fd, &file_size, err)                 ||
-        !sds_file_size_is_ok(file_size, err)                    ||
+        /* !sds_file_size_is_ok(file_size, err)                    || */
         !send_file(fd, file_size, midi, channel_num, sample_num, err)) {
 
-        fprintf(stderr, "%s\n", err_get(err));
-        goto end;
+        /* fprintf(stderr, "%s\n", err_get(err)); */
+        /* goto send_sds_main_end; */
+        exit(217);
     }
 
     ret = 0;
 
-end:
+/* send_sds_main_end: */
+
     err_destroy(err);
 
     if (fd) {
@@ -128,12 +121,13 @@ send_file(
     unsigned int sample_num,
     err_t err
 ) {
-    const char *indent = "    ";
     const char *trace = "[TRACE]";
 
     unsigned char buf[max(SDS_HEADER_LENGTH, SDS_PACKET_LENGTH)];
-    response_t response = RESPONSE_NULL;
+    response_t response = { 0, RESPONSE_NULL };
     unsigned int num_packets, packet_num, modded_packet_num;
+
+    num_packets = packet_num = modded_packet_num = 0;
 
     if (!sds_read_header(fd, buf, sizeof(buf), err)) {
         return 0;
@@ -158,21 +152,27 @@ send_file(
         fprintf(stderr, "could not get response");
         return 0;
     } else {
-        printf("Received %s\n", response_to_string(response));
+        printf("Received %s for packet %d\n",
+               response_to_string(response.type),
+               modded_packet_num);
     }
 
-    while (response != RESPONSE_ACK) {
+    if (response.type == RESPONSE_WAIT) {
         if (! get_response(midi, channel_num, 0, &response)) {
             fprintf(stderr, "could not get response");
             return 0;
         } else {
-            printf("%sReceived %s\n", indent, response_to_string(response));
+            printf("Received %s for packet %d\n",
+                   response_to_string(response.type),
+                   modded_packet_num);
         }
     }
 
+    // TODO: handle NAK
+
     num_packets = sds_calc_num_packets(file_size);
 
-    char packet_str[100];
+    char packet_str[500];
     for (packet_num=0; packet_num < num_packets; ) {
         modded_packet_num = packet_num % 0x80;
         packet_str[0] = '\0';
@@ -204,7 +204,7 @@ send_file(
             return 0;
         } else {
             sds_serialize_packet(packet_str, buf, SDS_PACKET_LENGTH);
-            printf("%sSent %s\n", indent, packet_str);
+            printf("Sent %s\n", packet_str);
         }
 
         if (__TRACE_SEND_PACKETS) {
@@ -215,24 +215,35 @@ send_file(
         if (!get_response(midi, channel_num, modded_packet_num, &response)) {
             fprintf(stderr,
                     "get_response failed with response %s\n",
-                    response_to_string(response));
+                    response_to_string(response.type));
             return 0;
         } else {
-            printf("%sReceived %s\n", indent, response_to_string(response));
+            printf("Received %s for packet %d\n",
+                   response_to_string(response.type),
+                   modded_packet_num);
         }
 
-        if (response != RESPONSE_ACK) {
+        /* if (response != RESPONSE_ACK) { */
+        /*     fprintf(stderr, */
+        /*             "received %s instead of %s in response to packet %d", */
+        /*             response_to_string(response), */
+        /*             response_to_string(RESPONSE_ACK), */
+        /*             packet_num); */
+        /*     return 0; */
+        /* } */
+
+        if (response.type == RESPONSE_ACK) {
+            if (__TRACE_SEND_PACKETS) {
+                printf("%s %s received response %s from sending packet %d\n",
+                       trace, __FUNCTION__, response_to_string(response.type), packet_num);
+            }
+        } else if (response.type == RESPONSE_NAK) {
             fprintf(stderr,
-                    "received %s instead of %s in response to packet %d",
-                    response_to_string(response),
+                    "received %s instead of %s in response to packet %d\n",
+                    response_to_string(response.type),
                     response_to_string(RESPONSE_ACK),
                     packet_num);
             return 0;
-        } else {
-            if (__TRACE_SEND_PACKETS) {
-                printf("%s %s received response %s from sending packet %d\n",
-                       trace, __FUNCTION__, response_to_string(response), packet_num);
-            }
         }
 
         packet_num++;
@@ -249,6 +260,7 @@ get_response(midi_t midi,
     const time_t start_time = time(NULL);
     const time_t timeout_sec = 2;
 
+    response_type rt;
     int bytes_read;
     time_t now;
     unsigned char c, t;
@@ -263,7 +275,7 @@ get_response(midi_t midi,
         }
 
         if (now - start_time > timeout_sec) {
-            *response = RESPONSE_TIMEOUT;
+            rt = RESPONSE_TIMEOUT;
             return 0;
         }
 
@@ -277,12 +289,14 @@ get_response(midi_t midi,
         case 1:
             if (c == 0x7e) {
                 bytes_read++;
+                /* printf("read first byte of response (%02X)\n", c); */
             }
             break;
 
         case 2:
             if (c == channel_num) {
                 bytes_read++;
+                /* printf("read second byte of response (%02X)\n", c); */
             }                       
             break;
 
@@ -290,12 +304,14 @@ get_response(midi_t midi,
             if (c >= 0x7c && c <= 0x7f) {
                 t = c;
                 bytes_read++;
+                /* printf("read third byte of response (%02X)\n", c); */
             }
             break;
 
         case 4:
             if (c == modded_packet_num) {
                 bytes_read++;
+                /* printf("read fourth byte of response (%02X)\n", c); */
             }
             break;
 
@@ -303,24 +319,28 @@ get_response(midi_t midi,
             if (c == 0xf7) {
                 switch (t) {
                 case 0x7c:
-                    *response = RESPONSE_WAIT;
+                    rt = RESPONSE_WAIT;
                     break;
                 case 0x7d:
-                    *response = RESPONSE_CANCEL;
+                    rt = RESPONSE_CANCEL;
                     break;
                 case 0x7e:
-                    *response = RESPONSE_NAK;
+                    rt = RESPONSE_NAK;
                     break;
                 case 0x7f:
-                    *response = RESPONSE_ACK;
+                    rt = RESPONSE_ACK;
                     break;
                 }
-
-                return 1;
+            } else {
+                fprintf(stderr, "Unrecognized byte (%02X)\n", c);
             }
+            bytes_read++;
             break;
         }
     }
 
-    return 0;
+    response_t r = { modded_packet_num, rt };
+    *response = r;
+
+    return 1;
 }
