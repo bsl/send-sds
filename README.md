@@ -1,4 +1,4 @@
-libmidisd provides utilities for sending SDS (MIDI Sample Dump Standard) files to
+send-sds provides utilities for sending SDS (MIDI Sample Dump Standard) files to
 samplers from Linux using the ALSA MIDI API.
 
 To convert an audio file to SDS, I use [libsndfile][1]'s sndfile-convert
