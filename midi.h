@@ -21,6 +21,8 @@ midi_close_interface(
     midi_t midi
 );
 
+/* int midi_flush(midi_t midi); */
+
 int
 midi_send(
     midi_t midi,
@@ -32,8 +34,7 @@ midi_send(
 int
 midi_read(
     midi_t midi,
-    unsigned char *byte,
-    err_t err
+    unsigned char *byte
 );
 
 #endif

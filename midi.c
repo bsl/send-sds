@@ -57,6 +57,12 @@ midi_close_interface(
     free(midi);
 }
 
+/* int */
+/* midi_flush(midi_t midi) { */
+/*     return (snd_rawmidi_drop(midi->handle_out) == 0) */
+/*         && (snd_rawmidi_drop(midi->handle_in) == 0); */
+/* } */
+
 int
 midi_send(
     midi_t midi,
@@ -78,14 +84,15 @@ midi_send(
 int
 midi_read(
     midi_t midi,
-    unsigned char *byte,
-    err_t err
+    unsigned char *byte
 ) {
     ssize_t r;
 
     r = snd_rawmidi_read(midi->handle_in, byte, 1);
     if ((size_t)r != 1) {
-        err_set2(err, "snd_rawmidi_read: tried to read 1 byte, read %d", r);
+        /* err_set2(err, "snd_rawmidi_read: tried to read 1 byte, read %d", r); */
+        fprintf(stderr,
+                "snd_rawmidi_read: tried to read 1 byte, read %d\n", (int) r);
         return 0;
     }
 
