@@ -35,11 +35,11 @@ send-sds 2010.10.23
 usage: send-sds <alsa-device> <channel-num> <sample-num> <sds-filename>
 ```
 
-## Creating SDS files
+## Sending SDS files
+
+### Create an SDS file from a wav file
 
 You must have `sndfile-tools` and `alsa-utils` already installed, since we will be using `sndfile-convert` and `amidi`.
-
-### Convert a wav file
 
 ```shell
 sndfile-convert foo.wav foo.sds
