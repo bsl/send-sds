@@ -108,7 +108,7 @@ display_usage(void)
     fprintf(
         stderr,
         "send-sds " VERSION "\n"
-        "usage: <alsa-device> <channel-num> <sample-num> <sds-filename>\n"
+        "usage: send-sds <alsa-device> <channel-num> <sample-num> <sds-filename>\n"
     );
 }
 
@@ -180,8 +180,7 @@ send_file(
         printf("Packet %d\n", modded_packet_num);
 
         if (__TRACE_SEND_PACKETS) {
-            printf("%s %s reading packet %d\n",
-                   trace, __FUNCTION__, packet_num);
+            printf("%s %s reading packet %d\n", trace, __func__, packet_num);
         }
 
         if (!sds_read_packet(fd, buf, sizeof(buf), err)) {
@@ -189,16 +188,14 @@ send_file(
         }
 
         if (__TRACE_SEND_PACKETS) {
-            printf("%s %s done reading packet %d\n",
-                   trace, __FUNCTION__, packet_num);
+            printf("%s %s done reading packet %d\n", trace, __func__, packet_num);
         }
 
         /* XXX patch channel number */
         /* XXX patch packet number */
 
         if (__TRACE_SEND_PACKETS) {
-            printf("%s %s sending packet %d\n",
-                   trace, __FUNCTION__, packet_num);
+            printf("%s %s sending packet %d\n", trace, __func__, packet_num);
         }
         if (!midi_send(midi, buf, SDS_PACKET_LENGTH, err)) {
             return 0;
@@ -209,7 +206,7 @@ send_file(
 
         if (__TRACE_SEND_PACKETS) {
             printf("%s %s done sending packet %d\n",
-                   trace, __FUNCTION__, packet_num);
+                   trace, __func__, packet_num);
         }
 
         if (!get_response(midi, channel_num, modded_packet_num, &response)) {
@@ -235,7 +232,7 @@ send_file(
         if (response.type == RESPONSE_ACK) {
             if (__TRACE_SEND_PACKETS) {
                 printf("%s %s received response %s from sending packet %d\n",
-                       trace, __FUNCTION__, response_to_string(response.type), packet_num);
+                       trace, __func__, response_to_string(response.type), packet_num);
             }
         } else if (response.type == RESPONSE_NAK) {
             fprintf(stderr,

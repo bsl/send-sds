@@ -20,7 +20,7 @@ err_set(
     ...
 );
 
-#define err_set2(err, format...) err_set(err, __FILE__, __FUNCTION__, __LINE__, format)
+#define err_set2(err, format...) err_set(err, __FILE__, __func__, __LINE__, format)
 
 const char *
 err_get(
