@@ -1,6 +1,8 @@
 #ifndef __ERR_H__
 #define __ERR_H__
 
+#include <stddef.h>
+
 /* make err_t opaque */
 struct err;
 typedef struct err * err_t;
