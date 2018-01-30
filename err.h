@@ -1,5 +1,5 @@
-#ifndef __ERR_H__
-#define __ERR_H__
+#ifndef ERR_H
+#define ERR_H
 
 #include <stddef.h>
 
