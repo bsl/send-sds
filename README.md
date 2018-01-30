@@ -3,7 +3,7 @@
 send-sds provides utilities for sending SDS (MIDI Sample Dump Standard) files to
 samplers from Linux using the ALSA MIDI API.
 
-[![Build Status](https://travis-ci.org/briansorahan/send-sds.png)](https://travis-ci.org/briansorahan/send-sds)
+[![Build Status](https://travis-ci.org/jwakely/send-sds.png)](https://travis-ci.org/jwakely/send-sds)
 
 ## Getting Started
 
@@ -14,6 +14,15 @@ samplers from Linux using the ALSA MIDI API.
 ```shell
 sudo apt-get update
 sudo apt-get install libsndfile1-dev sndfile-tools libasound2-dev alsa-utils
+```
+
+#### Red Hat/CentOS/Fedora systems
+
+```shell
+sudo dnf install alsa-lib-devel libsndfile-devel
+
+# For sndfile-convert on Fedora:
+sudo dnf install libsndfile-utils
 ```
 
 ### Build send-sds
