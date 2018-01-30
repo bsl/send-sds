@@ -5,6 +5,8 @@ sources   = common.c err.c midi.c sds.c
 headers   = $(wildcard *.h)
 libraries = -lasound -lsndfile
 
+dockertag = bsorahan/send-sds
+
 rm = rm -f
 
 all: send-sds receive-sds
@@ -19,6 +21,6 @@ clean:
 	-$(rm) receive-sds send-sds *.log *~
 
 image:
-	docker build -t bsorahan/send-sds .
+	docker build -t $(dockertag) .
 
 .PHONY: all clean image
