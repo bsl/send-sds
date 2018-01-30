@@ -106,5 +106,5 @@ err_set(
 const char *
 err_get(err_t err)
 {
-    return (const char *)(err->buf);
+    return err->buf;
 }
