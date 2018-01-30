@@ -1,10 +1,10 @@
 #define XOPEN_SOURCE 600 // strtoul
 
-#include <stdlib.h>
-#include <errno.h>
-
 #include "err.h"
 #include "common.h"
+
+#include <stdlib.h>
+#include <errno.h>
 
 int
 convert_channel_num(

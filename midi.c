@@ -1,11 +1,11 @@
 #define _XOPEN_SOURCE 500 /* string.h strdup */
 
+#include "midi.h"
+
 #include <stdio.h>
 #include <string.h>
 
 #include <alsa/asoundlib.h>
-
-#include "midi.h"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
