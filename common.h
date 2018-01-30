@@ -1,9 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#define VERSION "0.0.2"
-
 #include "err.h"
+
+#define VERSION "0.0.3-jw"
 
 #define max(a,b) ((a) > (b) ? (a) : (b))
 

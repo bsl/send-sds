@@ -108,7 +108,8 @@ display_usage(void)
     fprintf(
         stderr,
         "send-sds " VERSION "\n"
-        "usage: send-sds <alsa-device> <channel-num> <sample-num> <sds-filename>\n"
+        "Copyright (c) 2018, brian\n"
+        "Usage: send-sds <alsa-device> <channel-num> <sample-num> <sds-filename>\n"
     );
 }
 
