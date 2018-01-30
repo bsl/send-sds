@@ -1,2 +1,7 @@
 *~
 *.log
+*.d
+*.o
+send-sds
+receive-sds
+libsds.a

@@ -1,26 +1,30 @@
-compiler       = gcc
-compiler_flags = -std=c99 -pedantic -W -Wall -Wno-variadic-macros -Waggregate-return -Wbad-function-cast -Wcast-align -Wcast-qual -Wdisabled-optimization -Wendif-labels -Wfloat-equal -Winline -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wredundant-decls -Wshadow -Wsign-compare -Wstrict-prototypes -Wundef -Wwrite-strings
+CFLAGS = -std=c99 -MMD -pedantic -W -Wall -Wno-variadic-macros -Waggregate-return -Wbad-function-cast -Wcast-align -Wcast-qual -Wdisabled-optimization -Wendif-labels -Wfloat-equal -Winline -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wredundant-decls -Wshadow -Wsign-compare -Wstrict-prototypes -Wundef -Wwrite-strings
+LDFLAGS =
+LDLIBS = -lasound -lsndfile
 
-sources   = common.c err.c midi.c sds.c
-headers   = $(wildcard *.h)
-libraries = -lasound -lsndfile
+exes    = send-sds receive-sds
+deps    = $(addsuffix .d,$(basename $(wildcard *.c)))
+libobjs = common.o err.o midi.o sds.o
+libfile = libsds.a
 
 dockertag = bsorahan/send-sds
 
 rm = rm -f
 
-all: send-sds receive-sds
+all: $(exes)
 
-send-sds: send-sds.c $(sources) $(headers)
-	$(compiler) $(compiler_flags) -o $@ send-sds.c $(sources) $(libraries)
+$(libfile): $(libobjs)
+	$(AR) crs $@ $^
 
-receive-sds: receive-sds.c $(sources) $(headers)
-	$(compiler) $(compiler_flags) -o $@ receive-sds.c $(sources) $(libraries)
+$(exes): $(libfile)
+	$(CC) $(CFLAGS) -o $@ $@.c $(libfile) $(LDFLAGS) $(LDLIBS)
 
 clean:
-	-$(rm) receive-sds send-sds *.log *~
+	-$(rm) $(exes) $(deps) $(libfile) $(libobjs) *.log *~
 
 image:
 	docker build -t $(dockertag) .
 
 .PHONY: all clean image
+
+-include $(deps)
