@@ -5,3 +5,4 @@
 send-sds
 receive-sds
 libsds.a
+test-err
