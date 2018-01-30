@@ -2,4 +2,4 @@ before_script:
   - sudo apt-get update -qq
   - sudo apt-get install libasound2-dev libsndfile1-dev
 language: c
-script: make
+script: make all check
