@@ -39,6 +39,50 @@ err_destroy(err_t err)
     }
 }
 
+static void
+err_realloc(err_t err, size_t new_size)
+{
+    char *newbuf = (char*) malloc(new_size);
+    free(err->buf);
+    err->buf = newbuf;
+    err->buf_size = new_size;
+}
+
+static size_t
+va_err_set(
+    err_t err,
+    const char *filename,
+    const char *functionname,
+    const int linenum,
+    const char *format,
+    va_list ap
+) {
+    int n = snprintf(
+        err->buf,
+        err->buf_size,
+        "%s, %s(), line %d: ",
+        filename, functionname, linenum
+    );
+    if (n < 0)
+        abort();
+
+    char *buf;
+    size_t size;
+    if ((size_t)n < err->buf_size) {
+        size = err->buf_size - n;
+        buf = err->buf + n;
+    }
+    else {
+        size = 0;
+        buf = NULL;
+    }
+    int n2 = vsnprintf(buf, size, format, ap);
+    if (n2 < 0)
+        abort();
+
+    return n + n2;
+}
+
 void
 err_set(
     err_t err,
@@ -48,19 +92,15 @@ err_set(
     const char *format,
     ...
 ) {
-    char buf1[256]; /* XXX should not be fixed size */
     va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf1, sizeof(buf1), format, ap);
-    va_end(ap);
-
-    snprintf(
-        err->buf,
-        err->buf_size,
-        "%s, %s(), line %d: %s",
-        filename, functionname, linenum, buf1
-    );
+    for (;;) {
+        va_start(ap, format);
+        size_t n = va_err_set(err, filename, functionname, linenum, format, ap);
+        va_end(ap);
+        if (n < err->buf_size)
+            return;
+        err_realloc(err, n + 1);
+    }
 }
 
 const char *
