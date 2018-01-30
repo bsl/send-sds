@@ -6,7 +6,6 @@ exes    = send-sds receive-sds
 deps    = $(addsuffix .d,$(basename $(wildcard *.c)))
 libobjs = common.o err.o midi.o sds.o
 libfile = libsds.a
-tests   = test-err
 
 dockertag = bsorahan/send-sds
 
@@ -26,11 +25,14 @@ clean:
 image:
 	docker build -t $(dockertag) .
 
-check: $(tests)
+check: $(basename $(wildcard test-*.c))
 	@for test in $^ ; do ./$$test && echo PASS: $$test || echo FAIL: $$test >&2 ; done
 
 test-err: test-err.c err.o err.h
 	$(CC) $(CFLAGS) -o $@ $@.c err.o
+
+test-midi: test-midi.c $(libfile)
+	$(CC) $(CFLAGS) -o $@ $@.c $(libfile) $(LDFLAGS) $(LDLIBS)
 
 .PHONY: all clean image
 
