@@ -51,9 +51,11 @@ midi_close_interface(
         return;
     }
 
+    snd_rawmidi_drain(midi->handle_in);
+    snd_rawmidi_close(midi->handle_in);
+    snd_rawmidi_drain(midi->handle_out);
+    snd_rawmidi_close(midi->handle_out);
     free(midi->device);
-    free(midi->handle_in);
-    free(midi->handle_out);
     free(midi);
 }
 
