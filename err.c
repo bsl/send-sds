@@ -92,6 +92,9 @@ err_set(
     const char *format,
     ...
 ) {
+    if (err == NULL)
+        return;
+
     va_list ap;
     for (;;) {
         va_start(ap, format);
@@ -106,5 +109,5 @@ err_set(
 const char *
 err_get(err_t err)
 {
-    return err->buf;
+    return err ? err->buf : "";
 }

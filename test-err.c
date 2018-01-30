@@ -5,6 +5,7 @@
 
 void create_destroy(void);
 void set_get(size_t);
+void null_obj(void);
 
 void
 create_destroy(void)
@@ -26,6 +27,17 @@ set_get(size_t len)
     err_destroy(err);
 }
 
+void
+null_obj(void)
+{
+  err_t err = NULL;
+  err_set2(err, "%s", "don't crash");
+  const char *errstr = err_get(err);
+  assert(errstr != NULL);
+  assert(strlen(errstr) == 0);
+  err_destroy(err);
+}
+
 int
 main(void)
 {
@@ -33,4 +45,5 @@ main(void)
     set_get(1);
     set_get(10);
     set_get(100);
+    null_obj();
 }
