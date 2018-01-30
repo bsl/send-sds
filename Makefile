@@ -9,10 +9,10 @@ rm = rm -f
 
 all: send-sds receive-sds
 
-send-sds: $(sources) $(headers)
+send-sds: send-sds.c $(sources) $(headers)
 	$(compiler) $(compiler_flags) -o $@ send-sds.c $(sources) $(libraries)
 
-receive-sds: $(sources) $(headers)
+receive-sds: receive-sds.c $(sources) $(headers)
 	$(compiler) $(compiler_flags) -o $@ receive-sds.c $(sources) $(libraries)
 
 .PHONY: clean
