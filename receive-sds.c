@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     channel_string = NULL;
     channel_num = 0;
     fd = 0;
-    err = NULL;
+    err = err_create(256);
     midi = NULL;
 
     if (argc != 4) {
