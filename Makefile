@@ -9,8 +9,6 @@ libfile = libsds.a
 
 dockertag = bsorahan/send-sds
 
-rm = rm -f
-
 all: $(exes)
 
 $(libfile): $(libobjs)
@@ -20,7 +18,7 @@ $(exes): $(libfile)
 	$(CC) $(CFLAGS) -o $@ $@.c $(libfile) $(LDFLAGS) $(LDLIBS)
 
 clean:
-	-$(rm) $(exes) $(tests) $(deps) $(libfile) $(libobjs) *.log *~
+	-$(RM) $(exes) $(tests) $(deps) $(libfile) $(libobjs) *.log *~
 
 image:
 	docker build -t $(dockertag) .
