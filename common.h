@@ -3,7 +3,7 @@
 
 #include "err.h"
 
-#define VERSION "0.0.3-jw"
+#define VERSION "0.0.3"
 
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
