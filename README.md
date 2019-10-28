@@ -3,8 +3,6 @@
 send-sds provides utilities for sending SDS (MIDI Sample Dump Standard) files to
 samplers from Linux using the ALSA MIDI API.
 
-[![Build Status](https://travis-ci.org/jwakely/send-sds.png)](https://travis-ci.org/jwakely/send-sds)
-
 ## Getting Started
 
 ### Install dependencies
