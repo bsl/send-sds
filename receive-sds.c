@@ -1,12 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
-
 #include "common.h"
 #include "err.h"
 #include "midi.h"
 #include "sds.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
 
 // Size of the buffer for reading midi data.
 #define READ_PACKET_BUF_SIZE 1000
@@ -92,7 +92,8 @@ display_usage(void)
     fprintf(
         stderr,
         "receive-sds " VERSION "\n"
-        "usage: <alsa-device> <channel-num> <sds-filename>\n"
+        "Copyright (c) 2018, brian\n"
+        "Usage: receive-sds <alsa-device> <channel-num> <sds-filename>\n"
     );
 }
 

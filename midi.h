@@ -1,5 +1,5 @@
-#ifndef __MIDI_H__
-#define __MIDI_H__
+#ifndef MIDI_H
+#define MIDI_H
 
 #include <stdio.h>
 

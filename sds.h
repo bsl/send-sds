@@ -1,5 +1,5 @@
-#ifndef __SDS_H__
-#define __SDS_H__
+#ifndef SDS_H
+#define SDS_H
 
 #include <stdio.h>
 

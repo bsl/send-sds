@@ -1,11 +1,11 @@
+#include "sds.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-
-#include "sds.h"
 
 #define __SERIALIZE_INCLUDE_AUDIO_BYTES 1
 
