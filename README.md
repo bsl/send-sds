@@ -54,19 +54,24 @@ sndfile-convert foo.wav foo.sds
 
 ### List MIDI devices
 
+Connect your Elektron Machinedrum to your computer via a MIDI interface and run:
+
 ```shell
 amidi -l
 ```
 
-I (used to) own an Elektron Machinedrum that I connected to my computer through the Elektron TurboMIDI interface.
-`amidi` shows something like this with that setup:
+Take note of the `Device` column for the device you want to send an audio sample to.
+
+For example, if your Elektron Machinedrum is connected to the computer
+via an Elektron TurboMIDI interface the output would look something like this:
 
 ```
 Dir Device    Name
 IO  hw:1,0,0  Elektron TM-1 MIDI 1
 ```
 
-Take note of the `Device` column for the device you want to send an audio sample to.
+In this case, `hw:1,0,0` is the device you will send data to.
+
 
 ### Send a mono SDS file to sample slot 2
 
