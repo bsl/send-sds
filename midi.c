@@ -33,6 +33,9 @@ midi_open_interface(
         return 0;
     }
 
+    snd_rawmidi_nonblock( handle_in, 0 );
+    snd_rawmidi_nonblock( handle_out, 0 );
+
     midi             = malloc(sizeof(*midi));
     midi->device     = strdup(device);
     midi->handle_in  = handle_in;
