@@ -180,6 +180,7 @@ send_file(
 
         printf("Packet %d\n", modded_packet_num);
 
+        
         if (__TRACE_SEND_PACKETS) {
             printf("%s %s reading packet %d\n", trace, __func__, packet_num);
         }
@@ -210,17 +211,6 @@ send_file(
                    trace, __func__, packet_num);
         }
 
-        if (!get_response(midi, channel_num, modded_packet_num, &response)) {
-            fprintf(stderr,
-                    "get_response failed with response %s\n",
-                    response_to_string(response.type));
-            return 0;
-        } else {
-            printf("Received %s for packet %d\n",
-                   response_to_string(response.type),
-                   modded_packet_num);
-        }
-
         /* if (response != RESPONSE_ACK) { */
         /*     fprintf(stderr, */
         /*             "received %s instead of %s in response to packet %d", */
@@ -230,20 +220,50 @@ send_file(
         /*     return 0; */
         /* } */
 
-        if (response.type == RESPONSE_ACK) {
-            if (__TRACE_SEND_PACKETS) {
-                printf("%s %s received response %s from sending packet %d\n",
-                       trace, __func__, response_to_string(response.type), packet_num);
+        int have_ack = 0;
+        
+        const time_t start_time = time(NULL);
+        const time_t timeout_sec = 2;
+        time_t now;
+        while (!have_ack) {
+            
+            now = time(NULL);
+            if (now - start_time > timeout_sec) {
+                fprintf( stderr, "send_file timed out waiting for response\n" );
+                return 0;
             }
-        } else if (response.type == RESPONSE_NAK) {
-            fprintf(stderr,
-                    "received %s instead of %s in response to packet %d\n",
-                    response_to_string(response.type),
-                    response_to_string(RESPONSE_ACK),
-                    packet_num);
-            return 0;
-        }
 
+            
+            if (!get_response(midi, channel_num, modded_packet_num, &response)) {
+                fprintf(stderr,
+                        "get_response failed with response %s\n",
+                        response_to_string(response.type));
+                return 0;
+            } else {
+                printf("Received %s for packet %d\n",
+                    response_to_string(response.type),
+                    modded_packet_num);
+            }
+
+            if (response.type == RESPONSE_ACK) {
+                if (__TRACE_SEND_PACKETS) {
+                    printf("%s %s received response %s from sending packet %d\n",
+                        trace, __func__, response_to_string(response.type), packet_num);
+                }
+                
+                have_ack = 1;
+            } else if (response.type == RESPONSE_NAK) {
+                fprintf(stderr,
+                        "received %s instead of %s in response to packet %d\n",
+                        response_to_string(response.type),
+                        response_to_string(RESPONSE_ACK),
+                        packet_num);
+                return 0;
+            } else { // if (response.type == RESPONSE_WAIT) {
+                fprintf( stderr, "received %s while waiting for ACK for packet %d\n", response_to_string(response.type), packet_num );
+            }
+        }
+        
         packet_num++;
     }
 
@@ -257,26 +277,33 @@ get_response(midi_t midi,
              response_t *response) {
     const time_t start_time = time(NULL);
     const time_t timeout_sec = 2;
-
-    response_type rt;
-    int bytes_read;
+    response_type rt = RESPONSE_NULL;
+    
+    int bytes_read = 0;
+    int found_expected_packet = 0;
     time_t now;
-    unsigned char c, t;
-
-    bytes_read = 0;
-
-    while (bytes_read < SDS_RESPONSE_LENGTH) {
+    unsigned char c, t = 0;
+    
+    int have_response_packet = 0;    
+    while (!have_response_packet) {
         now = time(NULL);
-
+        
         if (!midi_read(midi, &c)) {
             return 0;
         }
 
+        // fprintf(stderr, "Byte#%d %02X\n", bytes_read, c);
+
         if (now - start_time > timeout_sec) {
-            rt = RESPONSE_TIMEOUT;
             return 0;
         }
 
+        if (c == 0xf0 && bytes_read > 0) {
+            fprintf( stderr, "Received start of new SysEx packet; ignoring what we collected so far...\n" );
+            bytes_read = 1;
+            continue;
+        }
+        
         switch (bytes_read) {
         case 0:
             if (c == 0xf0) {
@@ -303,14 +330,17 @@ get_response(midi_t midi,
                 t = c;
                 bytes_read++;
                 /* printf("read third byte of response (%02X)\n", c); */
+            } else {
+                fprintf( stderr, "Ignoring unsupported packet %02d\n", c );
             }
             break;
 
         case 4:
             if (c == modded_packet_num) {
-                bytes_read++;
+                found_expected_packet = 1;
                 /* printf("read fourth byte of response (%02X)\n", c); */
             }
+            bytes_read++;
             break;
 
         case 5:
@@ -335,6 +365,22 @@ get_response(midi_t midi,
             bytes_read++;
             break;
         }
+        
+        
+        if (c == 0xf7) {
+            if (!found_expected_packet) {
+                // This is the EOX, the last byte of the SysEx message. If
+                // this is detected, there are no more sysex messages. We may
+                // have read a partial packet. Perhaps the next packet is
+                // the ACK we are waiting for?
+                fprintf(stderr, "Ignoring unexpected / out-of-band packet...\n");
+                bytes_read = 0;
+                continue;
+            } else {
+                // We appear to have what we were waiting for.
+                have_response_packet = 1;
+            }
+        } 
     }
 
     response_t r = { modded_packet_num, rt };
