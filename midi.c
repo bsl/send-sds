@@ -27,7 +27,7 @@ midi_open_interface(
     snd_rawmidi_t *handle_in, *handle_out;
     midi_t midi;
 
-    r = snd_rawmidi_open(&handle_in, &handle_out, device, 0);
+    r = snd_rawmidi_open(&handle_in, &handle_out, device, SND_RAWMIDI_NONBLOCK);
     if (r) {
         err_set2(err, "snd_rawmidi_open \"%s\": error %d", device, r);
         return 0;
